@@ -182,7 +182,7 @@
                   if (this.model.opened) {
                       length = this.$children.length
                       for (let children of this.$children) {
-                          childHeight += children.maxHeight
+                          childHeight += children.maxHeight || 0
                       }
                   }
                   this.maxHeight = length * this.height + childHeight
@@ -231,7 +231,10 @@
           this.events = events
       },
       mounted () {
-          this.handleGroupMaxHeight()
+          this.$nextTick(function () {
+            this.handleGroupMaxHeight()
+            this.groupHeightCalculated = true
+          })
       }
   }
 </script>
