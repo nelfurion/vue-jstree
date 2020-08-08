@@ -4,7 +4,7 @@
         :draggable="draggable"
         @dragstart.stop="onItemDragStart($event, _self, _self.model)"
         @dragend.stop.prevent="onItemDragEnd($event, _self, _self.model)"
-        @dragover.stop.prevent="isDragEnter = true"
+        @dragover.prevent="handleDragOver($event, _self, _self.model)"
         @dragenter.stop.prevent="isDragEnter = true"
         @dragleave.stop.prevent="isDragEnter = false"
         @drop.stop.prevent="handleItemDrop($event, _self, _self.model)">
@@ -71,6 +71,9 @@
               type: Function, default: () => false
           },
           onItemDragStart: {
+              type: Function, default: () => false
+          },
+          onItemDragOver: {
               type: Function, default: () => false
           },
           onItemDragEnd: {
@@ -169,6 +172,10 @@
           }
       },
       methods: {
+          handleDragOver ($event, self, model) {
+            this.isDragEnter = true
+            this.onItemDragOver($event, self, model)
+          },
           handleItemToggle (e) {
               if (this.isFolder) {
                   this.model.opened = !this.model.opened

@@ -3,7 +3,9 @@ var webpack = require('webpack')
 
 module.exports = {
   //entry: './main.js',
-  entry: './src/index.js',
+  entry: './main.js',
+  stats: 'normal',
+  // watch: true,
   output: {
     path: path.resolve(__dirname, './dist'),
     //publicPath: '/dist/',
@@ -55,12 +57,13 @@ module.exports = {
   },
   devServer: {
     historyApiFallback: true,
-    noInfo: true
+    noInfo: true,
+    hot: false
   },
   performance: {
     hints: false
   },
-  devtool: '#eval-source-map'
+  devtool: 'inline-source-map',
 }
 
 if (process.env.NODE_ENV === 'production') {
