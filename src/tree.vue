@@ -2,6 +2,7 @@
   <div :class="classes" role="tree" onselectstart="return false">
     <ul :class="containerClasses" role="group">
       <tree-item
+        class="tree-item-toplevel"
         v-for="(child, index) in data"
         :key="index"
         :data="child"
@@ -41,7 +42,7 @@ import TreeItem from "./tree-item.vue";
 
 let ITEM_ID = 0;
 let ITEM_HEIGHT_SMALL = 18;
-let ITEM_HEIGHT_DEFAULT = 24;
+let ITEM_HEIGHT_DEFAULT = 34;
 let ITEM_HEIGHT_LARGE = 32;
 
 export default {
@@ -358,11 +359,8 @@ export default {
         // The addBefore and addAfter functions seem to be static functions, and
         // there doesn't appear to be any need for them to be called on a specific
         // node.
-        console.log('BEFORE IF')
         if (reorder.before || reorder.after) {
-          console.log('INSIDE IF')
           if (reorder.before) {
-            console.log(oriNode)
             this.$nextTick(() => {
               this.draggedItem.parentItem.splice(this.draggedItem.index, 1)
               oriItem.addBefore(this.draggedItem.item, oriNode)
@@ -376,10 +374,8 @@ export default {
         } else {
           if (!!oriItem[this.childrenFieldName]) {
             oriItem[this.childrenFieldName].push(this.draggedItem.item)
-            console.log('drop 1')
           } else {
             oriItem[this.childrenFieldName] = [this.draggedItem.item]
-            console.log('drop 2')
           }
 
           oriItem.opened = true
@@ -390,8 +386,6 @@ export default {
 
           this.$emit("item-drop", oriNode, oriItem, draggedItem.item, e)
         }
-
-        console.log('OUTSIDE IF')
       }
     }
   },

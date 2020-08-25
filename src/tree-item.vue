@@ -44,14 +44,14 @@
       </slot>
     </div>
     <ul
-      v-if="isFolder"
+      v-if="isFolder && model.opened"
       ref="group"
       role="group"
       class="tree-children"
       :style="groupStyle"
     >
       <tree-item
-        v-for="(child, index) in model[childrenFieldName]"
+        v-for="(child, index) in model.visibleChildren"
         :key="index"
         :data="child"
         :text-field-name="textFieldName"
@@ -107,7 +107,7 @@
           wholeRow: {type: Boolean, default: false},
           showCheckbox: {type: Boolean, default: false},
           allowTransition: {type: Boolean, default: true},
-          height: {type: Number, default: 24},
+          height: {type: Number, default: 34},
           parentItem: {type: Array},
           draggable: {type: Boolean, default: false},
           dragOverBackgroundColor: {type: String},
@@ -217,8 +217,6 @@
               if (newValue) {
                   this.$el.style.backgroundColor = this.dragOverBackgroundColor
               } else {
-                  console.log('dragEnter is false')
-                  console.log(this)
                   this.$el.style.backgroundColor = "inherit"
               }
           },
@@ -234,6 +232,8 @@
           }
       },
       created () {
+          this.model.visibleChildren = this.model[this.childrenFieldName] // .slice(0, 20)
+
           const self = this
           const events = {
               'click': this.handleItemClick,
@@ -278,7 +278,6 @@
           handleDragLeave ($event, self, model) {
             this.isDragEnter = false
             this.dragOverCount -= 1
-            console.log(`LEAVE ${this.dragOverCount}`)
           },
           handleDragOver ($event, self, model) {
             if (this.isBeingDragged) {
@@ -361,8 +360,6 @@
               currentNode.dragOverCount = 0
               currentNode.isDragEnter = false
 
-              console.log(currentNode)
-
               currentNode = currentNode.parentTreeNode            
             }
           },
@@ -373,6 +370,7 @@
               }
           },
           handleGroupMaxHeight () {
+            console.log(this)
               if (!!this.allowTransition) {
                   let length = 0
                   let childHeight = 0

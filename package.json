@@ -16,7 +16,8 @@
   },
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack --watch --progress --watch-poll",
-    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
+    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
+    "start": "cross-env NODE_ENV=production webpack --progress --hide-modules --watch --watch-poll"
   },
   "dependencies": {},
   "devDependencies": {
