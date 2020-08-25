@@ -34,7 +34,7 @@
     </ul>
   </div>
 </template>
-<script>
+<script lang="js">
 import TreeItem from "./tree-item.vue";
 
 let ITEM_ID = 0;
@@ -175,6 +175,9 @@ export default {
           node.opened = false;
         });
       };
+      node.removeSelf = function() {
+
+      };
       return node;
     },
     initializeLoading() {
@@ -269,6 +272,7 @@ export default {
       e.dataTransfer.setData("text", null);
       this.draggedElm = e.target;
       this.draggedItem = {
+        node: oriNode,
         item: oriItem,
         parentItem: oriNode.parentItem,
         index: oriNode.parentItem.findIndex(t => t.id === oriItem.id)
@@ -288,16 +292,21 @@ export default {
         mouseY - targetRect.top
       ]
 
-      const oneFifthNodeHeight = nodeHeight / 5
-      const targetCloseToTop = yInRect <= oneFifthNodeHeight
-      const targetCloseToBottom = yInRect >= (nodeHeight -oneFifthNodeHeight)
-      this.$emit("item-drag-over", {
-        target, 
-        targetModel, 
-        targetCloseToTop, 
-        targetCloseToBottom, 
-        event: e
-      })
+      const oneFourthNodeHeight = nodeHeight / 4
+      const positionInTarget = {
+        top: yInRect <= oneFourthNodeHeight,
+        bottom: yInRect >= (nodeHeight -oneFourthNodeHeight)
+      }
+
+      if (this.draggedItem) {
+        this.$emit("item-drag-over", {
+          target, 
+          targetModel, 
+          positionInTarget, 
+          event: e,
+          draggedItem: this.draggedItem.item
+        })
+      }
     },
     onItemDragEnd(e, oriNode, oriItem) {
       this.draggedItem = undefined;
@@ -305,23 +314,28 @@ export default {
       console.log('EVENT drag End')
       this.$emit("item-drag-end", oriNode, oriItem, e);
     },
-    onItemDrop(e, oriNode, oriItem) {
+    onItemDrop(e, oriNode, oriItem, reorder) {
       console.log('EVENT drag Drop')
-      if (!this.draggable || !!oriItem.dropDisabled) return false;
+
+      if (!this.draggable || !!oriItem.dropDisabled) {
+        return false
+      }
+
       this.$emit(
         "item-drop-before",
         oriNode,
         oriItem,
         !this.draggedItem ? undefined : this.draggedItem.item,
         e
-      );
+      )
+
       if (
         !this.draggedElm ||
-        this.draggedElm === e.target ||
-        this.draggedElm.contains(e.target)
+        this.draggedElm === e.target
       ) {
-        return;
+        return
       }
+
       if (this.draggedItem) {
         if (
           this.draggedItem.parentItem === oriItem[this.childrenFieldName] ||
@@ -331,19 +345,50 @@ export default {
               t => t.id === this.draggedItem.item.id
             ) !== -1)
         ) {
-          return;
+          return
         }
-        if (!!oriItem[this.childrenFieldName]) {
-          oriItem[this.childrenFieldName].push(this.draggedItem.item);
+
+        // oriItem is the drop target node's data - addBefore/After are defined here
+        // oriNode is the drop target node - node.parentItem is defined here
+        // Since dragover reordering works by adding paddings over / under nodes,
+        // the target is the node that we want to pass to addBefore/addAfter.
+        // The addBefore and addAfter functions seem to be static functions, and
+        // there doesn't appear to be any need for them to be called on a specific
+        // node.
+        console.log('BEFORE IF')
+        if (reorder.before || reorder.after) {
+          console.log('INSIDE IF')
+          if (reorder.before) {
+            console.log(oriNode)
+            this.$nextTick(() => {
+              this.draggedItem.parentItem.splice(this.draggedItem.index, 1)
+              oriItem.addBefore(this.draggedItem.item, oriNode)
+            })
+          } else if (reorder.after) {
+            this.$nextTick(() => {
+              this.draggedItem.parentItem.splice(this.draggedItem.index, 1)
+              oriItem.addAfter(this.draggedItem.item, oriNode)
+            })
+          }
         } else {
-          oriItem[this.childrenFieldName] = [this.draggedItem.item];
+          if (!!oriItem[this.childrenFieldName]) {
+            oriItem[this.childrenFieldName].push(this.draggedItem.item)
+            console.log('drop 1')
+          } else {
+            oriItem[this.childrenFieldName] = [this.draggedItem.item]
+            console.log('drop 2')
+          }
+
+          oriItem.opened = true
+          var draggedItem = this.draggedItem
+          this.$nextTick(() => {
+            draggedItem.parentItem.splice(draggedItem.index, 1)
+          })
+
+          this.$emit("item-drop", oriNode, oriItem, draggedItem.item, e)
         }
-        oriItem.opened = true;
-        var draggedItem = this.draggedItem;
-        this.$nextTick(() => {
-          draggedItem.parentItem.splice(draggedItem.index, 1);
-        });
-        this.$emit("item-drop", oriNode, oriItem, draggedItem.item, e);
+
+        console.log('OUTSIDE IF')
       }
     }
   },

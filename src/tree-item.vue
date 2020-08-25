@@ -1,54 +1,95 @@
 <template>
-    <li role="treeitem"
-        :class="classes"
+  <li
+    role="treeitem"
+    :class="classes"
+    :draggable="draggable"
+    @dragstart.stop="handleDragStart($event, _self, _self.model)"
+    @dragend.stop.prevent="handleDragEnd($event, _self, _self.model)"
+    @dragover.prevent="handleDragOver($event, _self, _self.model)"
+    @dragenter.stop.prevent="handleDragEnter($event, _self, _self.model)"
+    @dragleave.stop.prevent="handleDragLeave($event, _self, _self.model)"
+    @drop.stop.prevent="handleItemDrop($event, _self, _self.model)"
+  >
+    <div
+      v-if="isWholeRow"
+      role="presentation"
+      :class="wholeRowClasses"
+    >
+&nbsp;
+    </div>
+    <i
+      class="tree-icon tree-ocl"
+      role="presentation"
+      @click="handleItemToggle"
+    />
+    <div
+      :class="anchorClasses"
+      v-on="events"
+    >
+      <i
+        v-if="showCheckbox && !model.loading"
+        class="tree-icon tree-checkbox"
+        role="presentation"
+      />
+      <slot
+        :vm="this"
+        :model="model"
+      >
+        <i
+          v-if="!model.loading"
+          :class="themeIconClasses"
+          role="presentation"
+        />
+        <span v-html="model[textFieldName]" />
+      </slot>
+    </div>
+    <ul
+      v-if="isFolder"
+      ref="group"
+      role="group"
+      class="tree-children"
+      :style="groupStyle"
+    >
+      <tree-item
+        v-for="(child, index) in model[childrenFieldName]"
+        :key="index"
+        :data="child"
+        :text-field-name="textFieldName"
+        :value-field-name="valueFieldName"
+        :children-field-name="childrenFieldName"
+        :item-events="itemEvents"
+        :whole-row="wholeRow"
+        :show-checkbox="showCheckbox"
+        :allow-transition="allowTransition"
+        :height="height"
+        :parent-item="model[childrenFieldName]"
         :draggable="draggable"
-        @dragstart.stop="onItemDragStart($event, _self, _self.model)"
-        @dragend.stop.prevent="onItemDragEnd($event, _self, _self.model)"
-        @dragover.prevent="handleDragOver($event, _self, _self.model)"
-        @dragenter.stop.prevent="isDragEnter = true"
-        @dragleave.stop.prevent="isDragEnter = false"
-        @drop.stop.prevent="handleItemDrop($event, _self, _self.model)">
-        <div role="presentation" :class="wholeRowClasses" v-if="isWholeRow">&nbsp;</div>
-        <i class="tree-icon tree-ocl" role="presentation" @click="handleItemToggle"></i>
-        <div :class="anchorClasses" v-on="events">
-            <i class="tree-icon tree-checkbox" role="presentation" v-if="showCheckbox && !model.loading"></i>
-            <slot :vm="this" :model="model">
-                <i :class="themeIconClasses" role="presentation" v-if="!model.loading"></i>
-                <span v-html="model[textFieldName]"></span>
-            </slot>
-        </div>
-        <ul role="group" ref="group" class="tree-children" v-if="isFolder" :style="groupStyle">
-            <tree-item v-for="(child, index) in model[childrenFieldName]"
-                       :key="index"
-                       :data="child"
-                       :text-field-name="textFieldName"
-                       :value-field-name="valueFieldName"
-                       :children-field-name="childrenFieldName"
-                       :item-events="itemEvents"
-                       :whole-row="wholeRow"
-                       :show-checkbox="showCheckbox"
-                       :allow-transition="allowTransition"
-                       :height= "height"
-                       :parent-item="model[childrenFieldName]"
-                       :draggable="draggable"
-                       :drag-over-background-color="dragOverBackgroundColor"
-                       :on-item-click="onItemClick"
-                       :on-item-toggle="onItemToggle"
-                       :on-item-drag-start="onItemDragStart"
-                       :on-item-drag-end="onItemDragEnd"
-                       :on-item-drop="onItemDrop"
-                       :klass="index === model[childrenFieldName].length-1?'tree-last':''">
-                <template slot-scope="_">
-                    <slot :vm="_.vm" :model="_.model">
-                        <i :class="_.vm.themeIconClasses" role="presentation" v-if="!model.loading"></i>
-                        <span v-html="_.model[textFieldName]"></span>
-                    </slot>
-                </template>
-            </tree-item>
-        </ul>
-    </li>
+        :drag-over-background-color="dragOverBackgroundColor"
+        :on-item-click="onItemClick"
+        :on-item-toggle="onItemToggle"
+        :on-item-drag-start="onItemDragStart"
+        :on-item-drag-end="onItemDragEnd"
+        :on-item-drop="onItemDrop"
+        :klass="index === model[childrenFieldName].length-1?'tree-last':''"
+      >
+        <template slot-scope="_">
+          <slot
+            :vm="_.vm"
+            :model="_.model"
+          >
+            <i
+              v-if="!model.loading"
+              :class="_.vm.themeIconClasses"
+              role="presentation"
+            />
+            <span v-html="_.model[textFieldName]" />
+          </slot>
+        </template>
+      </tree-item>
+    </ul>
+  </li>
 </template>
-<script>
+<script lang="js">
   export default {
       name: 'TreeItem',
       props: {
@@ -88,28 +129,13 @@
           return {
               isHover: false,
               isDragEnter: false,
+              isBeingDragged: false,
+              dragOverCount: 0,
+              isDraggingOverUpwards: false,
+              isDraggingOverDownwards: false,
               model: this.data,
               maxHeight: 0,
               events: {}
-          }
-      },
-      watch: {
-          isDragEnter (newValue) {
-              if (newValue) {
-                  this.$el.style.backgroundColor = this.dragOverBackgroundColor
-              } else {
-                  this.$el.style.backgroundColor = "inherit"
-              }
-          },
-          data (newValue) {
-              this.model = newValue
-          },
-          'model.opened': {
-              handler: function (val, oldVal) {
-                  this.onItemToggle(this, this.model)
-                  this.handleGroupMaxHeight()
-              },
-              deep: true
           }
       },
       computed: {
@@ -117,15 +143,20 @@
               return this.model[this.childrenFieldName] && this.model[this.childrenFieldName].length
           },
           classes () {
-              return [
-                  {'tree-node': true},
-                  {'tree-open': this.model.opened},
-                  {'tree-closed': !this.model.opened},
-                  {'tree-leaf': !this.isFolder},
-                  {'tree-loading': !!this.model.loading},
-                  {'tree-drag-enter': this.isDragEnter},
-                  {[this.klass]: !!this.klass}
-              ]
+            const classes = [
+              {'tree-node': true},
+              {'tree-open': this.model.opened},
+              {'tree-closed': !this.model.opened},
+              {'tree-leaf': !this.isFolder},
+              {'tree-loading': !!this.model.loading},
+              {'tree-drag-enter': this.isDragEnter},
+              {'tree-dragover-top': this.isDraggingOverUpwards && (this.dragOverCount > 0)},
+              {'tree-dragover-bottom': this.isDraggingOverDownwards && (this.dragOverCount > 0)},
+              {'tree-dragover-middle': !this.isDraggingOverDownwards && !this.isDraggingOverUpwards && (this.dragOverCount > 0)},
+              {[this.klass]: !!this.klass}
+            ]
+
+            return classes
           },
           anchorClasses () {
               return [
@@ -171,9 +202,105 @@
               }
           }
       },
+      watch: {
+          isDragEnter (newValue) {
+              if (newValue) {
+                  this.$el.style.backgroundColor = this.dragOverBackgroundColor
+              } else {
+                  this.$el.style.backgroundColor = "inherit"
+              }
+          },
+          data (newValue) {
+              this.model = newValue
+          },
+          'model.opened': {
+              handler: function (val, oldVal) {
+                  this.onItemToggle(this, this.model)
+                  this.handleGroupMaxHeight()
+              },
+              deep: true
+          }
+      },
+      created () {
+          const self = this
+          const events = {
+              'click': this.handleItemClick,
+              'mouseover': this.handleItemMouseOver,
+              'mouseout': this.handleItemMouseOut
+          }
+          for (let itemEvent in this.itemEvents) {
+              let itemEventCallback = this.itemEvents[itemEvent]
+              if (events.hasOwnProperty(itemEvent)) {
+                  let eventCallback = events[itemEvent]
+                  events[itemEvent] = function (event) {
+                      eventCallback(self, self.model, event)
+                      itemEventCallback(self, self.model, event)
+                  }
+              } else {
+                  events[itemEvent] = function (event) {
+                      itemEventCallback(self, self.model, event)
+                  }
+              }
+          }
+          this.events = events
+      },
+      mounted () {
+          this.$nextTick(function () {
+            this.handleGroupMaxHeight()
+            this.groupHeightCalculated = true
+          })
+      },
       methods: {
-          handleDragOver ($event, self, model) {
+          handleDragStart($event, self, model) {
+            this.isBeingDragged = true
+            this.onItemDragStart($event, self, model)
+          },
+          handleDragEnd($event, self, model) {
+            this.isBeingDragged = false
+            this.onItemDragEnd($event, self, model)
+          },
+          handleDragEnter ($event, self, model) {
             this.isDragEnter = true
+            this.dragOverCount += 1
+          },
+          handleDragLeave ($event, self, model) {
+            this.isDragEnter = false
+            this.dragOverCount -= 1
+            console.log(`LEAVE ${this.dragOverCount}`)
+          },
+          handleDragOver ($event, self, model) {
+            if (this.isBeingDragged) {
+              return
+            }
+
+            this.isDragEnter = true
+            const targetRect = $event.target.getBoundingClientRect()
+            const { clientX: mouseX, clientY: mouseY } = $event
+
+            const nodeHeight = targetRect.bottom - targetRect.top
+
+            const [ xInRect, yInRect ] = [
+              mouseX - targetRect.left, 
+              mouseY - targetRect.top
+            ]
+
+            const oneThirdNodeHeight = nodeHeight / 3
+            const positionInTarget = {
+              top: yInRect <= oneThirdNodeHeight,
+              bottom: yInRect >= (nodeHeight -oneThirdNodeHeight)
+            }
+
+            if (positionInTarget.top) {
+              this.isDraggingOverUpwards = true
+              this.isDraggingOverDownwards = false
+            } else if (positionInTarget.bottom) {
+              this.isDraggingOverUpwards = false
+              this.isDraggingOverDownwards = true
+            } else {
+              this.isDraggingOverUpwards = false
+              this.isDraggingOverDownwards = false
+            }
+
             this.onItemDragOver($event, self, model)
           },
           handleItemToggle (e) {
@@ -211,37 +338,28 @@
           },
           handleItemDrop (e, oriNode, oriItem) {
               this.$el.style.backgroundColor = "inherit"
-              this.onItemDrop(e, oriNode, oriItem)
-          }
-      },
-      created () {
-          const self = this
-          const events = {
-              'click': this.handleItemClick,
-              'mouseover': this.handleItemMouseOver,
-              'mouseout': this.handleItemMouseOut
-          }
-          for (let itemEvent in this.itemEvents) {
-              let itemEventCallback = this.itemEvents[itemEvent]
-              if (events.hasOwnProperty(itemEvent)) {
-                  let eventCallback = events[itemEvent]
-                  events[itemEvent] = function (event) {
-                      eventCallback(self, self.model, event)
-                      itemEventCallback(self, self.model, event)
-                  }
-              } else {
-                  events[itemEvent] = function (event) {
-                      itemEventCallback(self, self.model, event)
-                  }
+              // Used to specify wether we are reordering items on the same
+              // level. So wether we want to put the dragged item before or
+              // after the current item.
+              const reorder = {
+                before: false,
+                after: false,
+                // id: this.data.id,
+                // node: this
               }
+
+              if (this.isDraggingOverUpwards) {
+                reorder.before = true
+              } else if (this.isDraggingOverDownwards) {
+                reorder.after = true
+              }
+
+              this.isDraggingOverUpwards = false
+              this.isDraggingOverDownwards = false
+              this.dragOverCount = 0
+
+              this.onItemDrop(e, oriNode, oriItem, reorder)
           }
-          this.events = events
-      },
-      mounted () {
-          this.$nextTick(function () {
-            this.handleGroupMaxHeight()
-            this.groupHeightCalculated = true
-          })
       }
   }
 </script>
