@@ -71,6 +71,8 @@
         :on-item-drag-end="onItemDragEnd"
         :on-item-drop="onItemDrop"
         :klass="index === model[childrenFieldName].length-1?'tree-last':''"
+        :parent-tree-node="node"
+        :on-drag-over-open-folder-timeout="onDragOverOpenFolderTimeout"
       >
         <template slot-scope="_">
           <slot
@@ -93,6 +95,10 @@
   export default {
       name: 'TreeItem',
       props: {
+          parentTreeNode: { 
+            validator: prop => typeof prop === 'object' || prop === null, 
+            required: true 
+          },
           data: {type: Object, required: true},
           textFieldName: {type: String},
           valueFieldName: {type: String},
@@ -105,6 +111,7 @@
           parentItem: {type: Array},
           draggable: {type: Boolean, default: false},
           dragOverBackgroundColor: {type: String},
+          onDragOverOpenFolderTimeout: { type: Number, required: true },
           onItemClick: {
               type: Function, default: () => false
           },
@@ -127,12 +134,15 @@
       },
       data () {
           return {
+              isTreeNode: true,
+              node: this,
               isHover: false,
               isDragEnter: false,
               isBeingDragged: false,
               dragOverCount: 0,
               isDraggingOverUpwards: false,
               isDraggingOverDownwards: false,
+              isDragOverFolderOpenScheduled: false,
               model: this.data,
               maxHeight: 0,
               events: {}
@@ -207,6 +217,8 @@
               if (newValue) {
                   this.$el.style.backgroundColor = this.dragOverBackgroundColor
               } else {
+                  console.log('dragEnter is false')
+                  console.log(this)
                   this.$el.style.backgroundColor = "inherit"
               }
           },
@@ -284,10 +296,10 @@
               mouseY - targetRect.top
             ]
 
-            const oneThirdNodeHeight = nodeHeight / 3
+            const oneFourthNodeHeight = nodeHeight / 4
             const positionInTarget = {
-              top: yInRect <= oneThirdNodeHeight,
-              bottom: yInRect >= (nodeHeight -oneThirdNodeHeight)
+              top: yInRect <= oneFourthNodeHeight,
+              bottom: yInRect >= (nodeHeight -oneFourthNodeHeight)
             }
 
             if (positionInTarget.top) {
@@ -299,9 +311,60 @@
             } else {
               this.isDraggingOverUpwards = false
               this.isDraggingOverDownwards = false
+
+              if (this.isFolder && !this.isDragOverFolderOpenScheduled && !this.model.opened) {
+                this.openFolderForDrop()
+              }
+              // if this is a collection, and no open is scheduled - schedule
+              // an open for after 1 second, and in the open check if the
+              // cursor is still over the collection. If it is, then open the
+              // the collection.
             }
 
             this.onItemDragOver($event, self, model)
+          },
+          openFolderForDrop () {
+            this.isDragOverFolderOpenScheduled = true
+            const node = this
+            setTimeout(() => {
+              node.handleItemToggle()
+            }, this.onDragOverOpenFolderTimeout);
+          },
+          handleItemDrop (e, oriNode, oriItem) {
+              this.$el.style.backgroundColor = "inherit"
+              // Used to specify wether we are reordering items on the same
+              // level. So wether we want to put the dragged item before or
+              // after the current item.
+              const reorder = {
+                before: false,
+                after: false,
+                // id: this.data.id,
+                // node: this
+              }
+
+              if (this.isDraggingOverUpwards) {
+                reorder.before = true
+              } else if (this.isDraggingOverDownwards) {
+                reorder.after = true
+              }
+
+              this.resetDragOverState()
+
+              this.onItemDrop(e, oriNode, oriItem, reorder)
+          },
+          resetDragOverState () {
+            let currentNode = this
+            while (currentNode && currentNode.isTreeNode === true) {
+              currentNode.isDragOverFolderOpenScheduled = false
+              currentNode.isDraggingOverUpwards = false
+              currentNode.isDraggingOverDownwards = false
+              currentNode.dragOverCount = 0
+              currentNode.isDragEnter = false
+
+              console.log(currentNode)
+
+              currentNode = currentNode.parentTreeNode            
+            }
           },
           handleItemToggle (e) {
               if (this.isFolder) {
@@ -336,30 +399,6 @@
           handleItemMouseOut () {
               this.isHover = false
           },
-          handleItemDrop (e, oriNode, oriItem) {
-              this.$el.style.backgroundColor = "inherit"
-              // Used to specify wether we are reordering items on the same
-              // level. So wether we want to put the dragged item before or
-              // after the current item.
-              const reorder = {
-                before: false,
-                after: false,
-                // id: this.data.id,
-                // node: this
-              }
-
-              if (this.isDraggingOverUpwards) {
-                reorder.before = true
-              } else if (this.isDraggingOverDownwards) {
-                reorder.after = true
-              }
-
-              this.isDraggingOverUpwards = false
-              this.isDraggingOverDownwards = false
-              this.dragOverCount = 0
-
-              this.onItemDrop(e, oriNode, oriItem, reorder)
-          }
       }
   }
 </script>

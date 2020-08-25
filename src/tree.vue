@@ -20,9 +20,11 @@
         :on-item-toggle="onItemToggle"
         :on-item-drag-start="onItemDragStart"
         :on-item-drag-over="onItemDragOver"
+        :on-drag-over-open-folder-timeout="onDragOverOpenFolderTimeout"
         :on-item-drag-end="onItemDragEnd"
         :on-item-drop="onItemDrop"
         :klass="index === data.length-1?'tree-last':''"
+        :parent-tree-node="null"
       >
         <template slot-scope="_">
           <slot :vm="_.vm" :model="_.model">
@@ -70,6 +72,7 @@ export default {
     loadingText: { type: String, default: "Loading..." },
     draggable: { type: Boolean, default: false },
     dragOverBackgroundColor: { type: String, default: "#C9FDC9" },
+    onDragOverOpenFolderTimeout: { type: Number, default: 500 },
     klass: String
   },
   data() {
