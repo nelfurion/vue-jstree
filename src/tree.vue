@@ -137,6 +137,7 @@ export default {
         this.selected = item.selected || false;
         this.disabled = item.disabled || false;
         this.loading = item.loading || false;
+        this.isFolder = item.type === 'folder';
         this[childrenFieldName] = item[childrenFieldName] || [];
       }
 
@@ -372,10 +373,12 @@ export default {
             })
           }
         } else {
-          if (!!oriItem[this.childrenFieldName]) {
+          if (!!oriItem[this.childrenFieldName] && oriItem.isFolder) {
             oriItem[this.childrenFieldName].push(this.draggedItem.item)
-          } else {
+          } else if (oriItem.isFolder) {
             oriItem[this.childrenFieldName] = [this.draggedItem.item]
+          } else {
+            return
           }
 
           oriItem.opened = true

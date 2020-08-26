@@ -150,7 +150,7 @@
       },
       computed: {
           isFolder () {
-              return this.model[this.childrenFieldName] && this.model[this.childrenFieldName].length
+              return this.model.isFolder
           },
           classes () {
             const classes = [
