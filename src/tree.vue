@@ -334,9 +334,12 @@ export default {
         e
       )
 
+      const eventData = e.dataTransfer.items.length > 0 ? e.dataTransfer.items[0] : null
+
       if (
         !this.draggedElm ||
-        this.draggedElm === e.target
+        this.draggedElm === e.target &&
+        !eventData
       ) {
         return
       }
@@ -350,7 +353,13 @@ export default {
               t => t.id === this.draggedItem.item.id
             ) !== -1)
         ) {
-          return
+          if (!eventData) {
+            return
+          }
+        }
+
+        if (eventData) {
+
         }
 
         // oriItem is the drop target node's data - addBefore/After are defined here
@@ -363,12 +372,18 @@ export default {
         if (reorder.before || reorder.after) {
           if (reorder.before) {
             this.$nextTick(() => {
-              this.draggedItem.parentItem.splice(this.draggedItem.index, 1)
+              if (this.draggedItem.parentItem) {
+                this.draggedItem.parentItem.splice(this.draggedItem.index, 1)
+              }
+
               oriItem.addBefore(this.draggedItem.item, oriNode)
             })
           } else if (reorder.after) {
             this.$nextTick(() => {
-              this.draggedItem.parentItem.splice(this.draggedItem.index, 1)
+              if (this.draggedItem.parentItem) {
+                this.draggedItem.parentItem.splice(this.draggedItem.index, 1)
+              }
+              
               oriItem.addAfter(this.draggedItem.item, oriNode)
             })
           }
@@ -383,9 +398,11 @@ export default {
 
           oriItem.opened = true
           var draggedItem = this.draggedItem
-          this.$nextTick(() => {
-            draggedItem.parentItem.splice(draggedItem.index, 1)
-          })
+          if (draggedItem.parentItem) {
+            this.$nextTick(() => {
+              draggedItem.parentItem.splice(draggedItem.index, 1)
+            })
+          }
 
           this.$emit("item-drop", oriNode, oriItem, draggedItem.item, e)
         }
