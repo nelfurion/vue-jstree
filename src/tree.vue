@@ -283,7 +283,6 @@ export default {
         index: oriNode.parentItem.findIndex(t => t.id === oriItem.id)
       };
 
-      console.log('EVENT drag Start')
       this.$emit("item-drag-start", oriNode, oriItem, e);
     },
     onItemDragOver(e, target, targetModel) {
@@ -316,12 +315,9 @@ export default {
     onItemDragEnd(e, oriNode, oriItem) {
       this.draggedItem = undefined;
       this.draggedElm = undefined;
-      console.log('EVENT drag End')
       this.$emit("item-drag-end", oriNode, oriItem, e);
     },
-    onItemDrop(e, oriNode, oriItem, reorder) {
-      console.log('EVENT drag Drop')
-
+    async onItemDrop(e, oriNode, oriItem, reorder) {
       if (!this.draggable || !!oriItem.dropDisabled) {
         return false
       }
@@ -334,32 +330,48 @@ export default {
         e
       )
 
-      const eventData = e.dataTransfer.items.length > 0 ? e.dataTransfer.items[0] : null
+      // Other things like the text of the dragged item are added automatically
+      // to the dataList, and the order is not promised.
+      let eventData = null
+      for (const item of e.dataTransfer.items) {
+        if (item.type === 'text/json' && item.kind === 'string') {
+          // The promise is needed, because the getAsString requires a callback
+          eventData = await new Promise((resolve, reject) => {
+            item.getAsString((data) => {
+              resolve(JSON.parse(data))
+            })
+          })
+        }
+      }
 
       if (
-        !this.draggedElm ||
-        this.draggedElm === e.target &&
+        (!this.draggedElm || this.draggedElm === e.target) &&
         !eventData
       ) {
         return
       }
 
+      // Lets put the eventData in the this.draggedItem so we change as little
+      // code below as possible.
+      if (eventData) {
+        this.draggedItem = {
+          item: this.initializeDataItem(eventData)
+        }
+      }
+
       if (this.draggedItem) {
         if (
-          this.draggedItem.parentItem === oriItem[this.childrenFieldName] ||
-          this.draggedItem.item === oriItem ||
-          (oriItem[this.childrenFieldName] &&
-            oriItem[this.childrenFieldName].findIndex(
-              t => t.id === this.draggedItem.item.id
-            ) !== -1)
+          !eventData &&
+          (
+            this.draggedItem.parentItem === oriItem[this.childrenFieldName] ||
+            this.draggedItem.item === oriItem ||
+            (oriItem[this.childrenFieldName] &&
+              oriItem[this.childrenFieldName].findIndex(
+                t => t.id === this.draggedItem.item.id
+              ) !== -1)
+          )
         ) {
-          if (!eventData) {
-            return
-          }
-        }
-
-        if (eventData) {
-
+          return
         }
 
         // oriItem is the drop target node's data - addBefore/After are defined here

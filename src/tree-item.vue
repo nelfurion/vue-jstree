@@ -330,26 +330,26 @@
             }, this.onDragOverOpenFolderTimeout);
           },
           handleItemDrop (e, oriNode, oriItem) {
-              this.$el.style.backgroundColor = "inherit"
-              // Used to specify wether we are reordering items on the same
-              // level. So wether we want to put the dragged item before or
-              // after the current item.
-              const reorder = {
-                before: false,
-                after: false,
-                // id: this.data.id,
-                // node: this
-              }
+            this.$el.style.backgroundColor = "inherit"
+            // Used to specify wether we are reordering items on the same
+            // level. So wether we want to put the dragged item before or
+            // after the current item.
+            const reorder = {
+              before: false,
+              after: false,
+              // id: this.data.id,
+              // node: this
+            }
 
-              if (this.isDraggingOverUpwards) {
-                reorder.before = true
-              } else if (this.isDraggingOverDownwards) {
-                reorder.after = true
-              }
+            if (this.isDraggingOverUpwards) {
+              reorder.before = true
+            } else if (this.isDraggingOverDownwards) {
+              reorder.after = true
+            }
 
-              this.resetDragOverState()
+            this.resetDragOverState()
 
-              this.onItemDrop(e, oriNode, oriItem, reorder)
+            this.onItemDrop(e, oriNode, oriItem, reorder)
           },
           resetDragOverState () {
             let currentNode = this
@@ -370,7 +370,6 @@
               }
           },
           handleGroupMaxHeight () {
-            console.log(this)
               if (!!this.allowTransition) {
                   let length = 0
                   let childHeight = 0
