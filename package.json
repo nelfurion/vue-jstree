@@ -1,25 +1,39 @@
 {
-  "name": "vue-jstree",
-  "version": "2.1.6",
-  "description": "a tree plugin for vue2",
-  "keywords": [
-    "vue2",
-    "tree"
+  "_args": [
+    [
+      "github:nelfurion/vue-jstree#master",
+      "/mnt/c/Users/nelfurion/Desktop/extension"
+    ]
   ],
-  "author": "zdy1988 <virus_zhh@126.com>",
-  "main": "dist/vue-jstree.js",
-  "private": false,
-  "license": "MIT",
-  "repository": {
+  "_from": "github:nelfurion/vue-jstree#master",
+  "_id": "vue-jstree@github:nelfurion/vue-jstree#c145eee2c9201041a91fb0b39c0c83dec77bb487",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/vue-jstree",
+  "_phantomChildren": {},
+  "_requested": {
     "type": "git",
-    "url": "https://github.com/zdy1988/vue-jstree.git"
+    "raw": "github:nelfurion/vue-jstree#master",
+    "rawSpec": "github:nelfurion/vue-jstree#master",
+    "saveSpec": "github:nelfurion/vue-jstree#master",
+    "fetchSpec": null,
+    "gitCommittish": "master"
   },
-  "scripts": {
-    "dev": "cross-env NODE_ENV=development webpack --watch --progress --watch-poll",
-    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
-    "start": "cross-env NODE_ENV=production webpack --progress --hide-modules --watch --watch-poll"
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "github:nelfurion/vue-jstree#c145eee2c9201041a91fb0b39c0c83dec77bb487",
+  "_spec": "github:nelfurion/vue-jstree#master",
+  "_where": "/mnt/c/Users/nelfurion/Desktop/extension",
+  "author": {
+    "name": "zdy1988",
+    "email": "virus_zhh@126.com"
+  },
+  "bugs": {
+    "url": "https://github.com/zdy1988/vue-jstree/issues"
   },
   "dependencies": {},
+  "description": "a tree plugin for vue2",
   "devDependencies": {
     "babel-core": "^6.0.0",
     "babel-loader": "^6.0.0",
@@ -35,5 +49,24 @@
     "vue-template-compiler": "^2.3.3",
     "webpack": "^2.6.1",
     "webpack-dev-server": "^2.4.5"
-  }
+  },
+  "homepage": "https://github.com/zdy1988/vue-jstree#readme",
+  "keywords": [
+    "vue2",
+    "tree"
+  ],
+  "license": "MIT",
+  "main": "dist/vue-jstree.js",
+  "name": "vue-jstree",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zdy1988/vue-jstree.git"
+  },
+  "scripts": {
+    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
+    "dev": "cross-env NODE_ENV=development webpack --watch --progress --watch-poll",
+    "start": "cross-env NODE_ENV=production webpack --progress --hide-modules --watch --watch-poll"
+  },
+  "version": "2.1.6"
 }

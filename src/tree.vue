@@ -1,39 +1,42 @@
 <template>
   <div :class="classes" role="tree" onselectstart="return false">
     <ul :class="containerClasses" role="group">
-      <tree-item
-        class="tree-item-toplevel"
-        v-for="(child, index) in data"
-        :key="index"
-        :data="child"
-        :text-field-name="textFieldName"
-        :value-field-name="valueFieldName"
-        :children-field-name="childrenFieldName"
-        :item-events="itemEvents"
-        :whole-row="wholeRow"
-        :show-checkbox="showCheckbox"
-        :allow-transition="allowTransition"
-        :height="sizeHeight"
-        :parent-item="data"
-        :draggable="draggable"
-        :drag-over-background-color="dragOverBackgroundColor"
-        :on-item-click="onItemClick"
-        :on-item-toggle="onItemToggle"
-        :on-item-drag-start="onItemDragStart"
-        :on-item-drag-over="onItemDragOver"
-        :on-drag-over-open-folder-timeout="onDragOverOpenFolderTimeout"
-        :on-item-drag-end="onItemDragEnd"
-        :on-item-drop="onItemDrop"
-        :klass="index === data.length-1?'tree-last':''"
-        :parent-tree-node="null"
-      >
-        <template slot-scope="_">
-          <slot :vm="_.vm" :model="_.model">
-            <i :class="_.vm.themeIconClasses" role="presentation" v-if="!_.model.loading"></i>
-            <span v-html="_.model[textFieldName]"></span>
-          </slot>
-        </template>
-      </tree-item>
+      <li class="tree-item js-tree-position-placeholder js-tree-position-before-children" :bookmark-id="data.id"></li>
+      <template v-for="(child, index) in data">
+        <tree-item
+          class="tree-item tree-item-toplevel"
+          :key="index"
+          :data="child"
+          :text-field-name="textFieldName"
+          :value-field-name="valueFieldName"
+          :children-field-name="childrenFieldName"
+          :item-events="itemEvents"
+          :whole-row="wholeRow"
+          :show-checkbox="showCheckbox"
+          :allow-transition="allowTransition"
+          :height="sizeHeight"
+          :parent-item="data"
+          :draggable="draggable"
+          :drag-over-background-color="dragOverBackgroundColor"
+          :on-item-click="onItemClick"
+          :on-item-toggle="onItemToggle"
+          :on-item-drag-start="onItemDragStart"
+          :on-item-drag-over="onItemDragOver"
+          :on-drag-over-open-folder-timeout="onDragOverOpenFolderTimeout"
+          :on-item-drag-end="onItemDragEnd"
+          :on-item-drop="onItemDrop"
+          :klass="index === data.length-1?'tree-last':''"
+          :parent-tree-node="null"
+        >
+          <template slot-scope="_">
+            <slot :vm="_.vm" :model="_.model">
+              <i :class="_.vm.themeIconClasses" role="presentation" v-if="!_.model.loading"></i>
+              <span v-html="_.model[textFieldName]"></span>
+            </slot>
+          </template>
+        </tree-item>
+        <li class="tree-item js-tree-position-placeholder js-tree-position-after" :bookmark-id="child.id"></li>
+      </template>
     </ul>
   </div>
 </template>
@@ -42,7 +45,7 @@ import TreeItem from "./tree-item.vue";
 
 let ITEM_ID = 0;
 let ITEM_HEIGHT_SMALL = 18;
-let ITEM_HEIGHT_DEFAULT = 34;
+let ITEM_HEIGHT_DEFAULT = 24;
 let ITEM_HEIGHT_LARGE = 32;
 
 export default {

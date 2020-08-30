@@ -2,10 +2,11 @@
   <li
     role="treeitem"
     :class="classes"
+    class="tree-item"
     :draggable="draggable"
     @dragstart.stop="handleDragStart($event, _self, _self.model)"
     @dragend.stop.prevent="handleDragEnd($event, _self, _self.model)"
-    @dragover.prevent="handleDragOver($event, _self, _self.model)"
+    @dragover.stop.prevent="handleDragOver($event, _self, _self.model)"
     @dragenter.stop.prevent="handleDragEnter($event, _self, _self.model)"
     @dragleave.stop.prevent="handleDragLeave($event, _self, _self.model)"
     @drop.stop.prevent="handleItemDrop($event, _self, _self.model)"
@@ -50,44 +51,47 @@
       class="tree-children"
       :style="groupStyle"
     >
-      <tree-item
-        v-for="(child, index) in model.visibleChildren"
-        :key="index"
-        :data="child"
-        :text-field-name="textFieldName"
-        :value-field-name="valueFieldName"
-        :children-field-name="childrenFieldName"
-        :item-events="itemEvents"
-        :whole-row="wholeRow"
-        :show-checkbox="showCheckbox"
-        :allow-transition="allowTransition"
-        :height="height"
-        :parent-item="model[childrenFieldName]"
-        :draggable="draggable"
-        :drag-over-background-color="dragOverBackgroundColor"
-        :on-item-click="onItemClick"
-        :on-item-toggle="onItemToggle"
-        :on-item-drag-start="onItemDragStart"
-        :on-item-drag-end="onItemDragEnd"
-        :on-item-drop="onItemDrop"
-        :klass="index === model[childrenFieldName].length-1?'tree-last':''"
-        :parent-tree-node="node"
-        :on-drag-over-open-folder-timeout="onDragOverOpenFolderTimeout"
-      >
-        <template slot-scope="_">
-          <slot
-            :vm="_.vm"
-            :model="_.model"
-          >
-            <i
-              v-if="!model.loading"
-              :class="_.vm.themeIconClasses"
-              role="presentation"
-            />
-            <span v-html="_.model[textFieldName]" />
-          </slot>
-        </template>
-      </tree-item>
+      <li class="tree-item js-tree-position-placeholder js-tree-position-before-children" :bookmark-id="model.id"></li>
+      <template v-for="(child, index) in model.visibleChildren">
+        <tree-item
+          :key="index"
+          :data="child"
+          :text-field-name="textFieldName"
+          :value-field-name="valueFieldName"
+          :children-field-name="childrenFieldName"
+          :item-events="itemEvents"
+          :whole-row="wholeRow"
+          :show-checkbox="showCheckbox"
+          :allow-transition="allowTransition"
+          :height="height"
+          :parent-item="model[childrenFieldName]"
+          :draggable="draggable"
+          :drag-over-background-color="dragOverBackgroundColor"
+          :on-item-click="onItemClick"
+          :on-item-toggle="onItemToggle"
+          :on-item-drag-start="onItemDragStart"
+          :on-item-drag-end="onItemDragEnd"
+          :on-item-drop="onItemDrop"
+          :klass="index === model[childrenFieldName].length-1?'tree-last':''"
+          :parent-tree-node="node"
+          :on-drag-over-open-folder-timeout="onDragOverOpenFolderTimeout"
+        >
+          <template slot-scope="_">
+            <slot
+              :vm="_.vm"
+              :model="_.model"
+            >
+              <i
+                v-if="!model.loading"
+                :class="_.vm.themeIconClasses"
+                role="presentation"
+              />
+              <span v-html="_.model[textFieldName]" />
+            </slot>
+          </template>
+        </tree-item>
+        <li class="tree-item js-tree-position-placeholder js-tree-position-after" :bookmark-id="child.id"></li>
+      </template>
     </ul>
   </li>
 </template>
@@ -107,7 +111,7 @@
           wholeRow: {type: Boolean, default: false},
           showCheckbox: {type: Boolean, default: false},
           allowTransition: {type: Boolean, default: true},
-          height: {type: Number, default: 34},
+          height: {type: Number, required: true},
           parentItem: {type: Array},
           draggable: {type: Boolean, default: false},
           dragOverBackgroundColor: {type: String},
@@ -160,9 +164,6 @@
               {'tree-leaf': !this.isFolder},
               {'tree-loading': !!this.model.loading},
               {'tree-drag-enter': this.isDragEnter},
-              {'tree-dragover-top': this.isDraggingOverUpwards && (this.dragOverCount > 0)},
-              {'tree-dragover-bottom': this.isDraggingOverDownwards && (this.dragOverCount > 0)},
-              {'tree-dragover-middle': !this.isDraggingOverDownwards && !this.isDraggingOverUpwards && (this.dragOverCount > 0)},
               {[this.klass]: !!this.klass}
             ]
 
@@ -272,45 +273,63 @@
             this.onItemDragEnd($event, self, model)
           },
           handleDragEnter ($event, self, model) {
-            this.isDragEnter = true
+            const positionInTarget = this.getDragoverPosition($event)
+            if (positionInTarget.inside) {
+              this.isDragEnter = true
+            }
+
             this.dragOverCount += 1
           },
           handleDragLeave ($event, self, model) {
             this.isDragEnter = false
             this.dragOverCount -= 1
+            this.resetDragOverStateBubble()
           },
-          handleDragOver ($event, self, model) {
-            if (this.isBeingDragged) {
-              return
-            }
-
-            this.isDragEnter = true
-            const targetRect = $event.target.getBoundingClientRect()
+          getDragoverPosition ($event) {
+            const targetRect = this.$el.getBoundingClientRect()
             const { clientX: mouseX, clientY: mouseY } = $event
-
-            const nodeHeight = targetRect.bottom - targetRect.top
 
             const [ xInRect, yInRect ] = [
               mouseX - targetRect.left, 
               mouseY - targetRect.top
             ]
 
-            const oneFourthNodeHeight = nodeHeight / 4
+            const oneThirdNodeHeight = this.height / 3
+
             const positionInTarget = {
-              top: yInRect <= oneFourthNodeHeight,
-              bottom: yInRect >= (nodeHeight -oneFourthNodeHeight)
+              inside: yInRect <= this.height,
+              top: yInRect <= oneThirdNodeHeight,
+              bottom: yInRect >= (this.height -oneThirdNodeHeight) && yInRect <= this.height,
+            }
+
+            return positionInTarget
+          },
+          handleDragOver ($event, self, model) {
+            if (this.isBeingDragged) {
+              return
+            }
+
+            const positionInTarget = this.getDragoverPosition($event)
+            if (positionInTarget.inside) {
+              this.isDragEnter = true
             }
 
             if (positionInTarget.top) {
               this.isDraggingOverUpwards = true
               this.isDraggingOverDownwards = false
+              this.$el.previousElementSibling.style.background = "black"
+              this.$el.previousElementSibling.style.backgroundColor = "black"
+              this.$el.nextElementSibling.style.background = "transparent"
             } else if (positionInTarget.bottom) {
               this.isDraggingOverUpwards = false
               this.isDraggingOverDownwards = true
+              this.$el.previousElementSibling.style.background = "transparent"
+              this.$el.nextElementSibling.style.background = "black"
             } else {
+              this.$el.previousElementSibling.style.background = "transparent"
+              this.$el.nextElementSibling.style.background = "transparent"
               this.isDraggingOverUpwards = false
               this.isDraggingOverDownwards = false
-
               if (this.isFolder && !this.isDragOverFolderOpenScheduled && !this.model.opened) {
                 this.openFolderForDrop()
               }
@@ -319,7 +338,6 @@
               // cursor is still over the collection. If it is, then open the
               // the collection.
             }
-
             this.onItemDragOver($event, self, model)
           },
           openFolderForDrop () {
@@ -347,20 +365,30 @@
               reorder.after = true
             }
 
-            this.resetDragOverState()
+            this.resetDragOverStateBubble()
 
             this.onItemDrop(e, oriNode, oriItem, reorder)
           },
-          resetDragOverState () {
+          resetDragOverState (node) {
+            node.isDragOverFolderOpenScheduled = false
+            node.isDraggingOverUpwards = false
+            node.isDraggingOverDownwards = false
+            node.dragOverCount = 0
+            node.isDragEnter = false
+          },
+          resetDragOverStateBubble () {
             let currentNode = this
             while (currentNode && currentNode.isTreeNode === true) {
-              currentNode.isDragOverFolderOpenScheduled = false
-              currentNode.isDraggingOverUpwards = false
-              currentNode.isDraggingOverDownwards = false
-              currentNode.dragOverCount = 0
-              currentNode.isDragEnter = false
+              this.resetDragOverState(currentNode)
 
               currentNode = currentNode.parentTreeNode            
+            }
+
+            const positionPlaceholders = 
+              document.querySelectorAll('.js-tree-position-placeholder')
+
+            for (const placeholder of positionPlaceholders) {
+              placeholder.style.background = "transparent"
             }
           },
           handleItemToggle (e) {
