@@ -450,6 +450,7 @@
                       }
                   }
                   this.maxHeight = length * this.height + childHeight
+                  this.maxHeight += length + 1 // position placeholders
                   if (this.$parent.$options._componentTag === 'tree-item') {
                       this.$parent.handleGroupMaxHeight()
                   }
