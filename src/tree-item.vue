@@ -10,6 +10,7 @@
     @dragenter.stop.prevent="handleDragEnter($event, _self, _self.model)"
     @dragleave.stop.prevent="handleDragLeave($event, _self, _self.model)"
     @drop.stop.prevent="handleItemDrop($event, _self, _self.model)"
+    @click.stop.prevent="handleItemToggle"
   >
     <div
       v-if="isWholeRow"
@@ -19,9 +20,10 @@
 &nbsp;
     </div>
     <i
+      :class="{'hidden': !this.model.opened}"
+      ref="iconToggle"
       class="tree-icon tree-ocl"
       role="presentation"
-      @click="handleItemToggle"
     />
     <div
       :class="anchorClasses"
@@ -216,8 +218,10 @@
       watch: {
           isDragEnter (newValue) {
               if (newValue) {
+                  this.$refs.iconToggle.style.backgroundColor = "lightgrey"
                   this.$el.style.backgroundColor = this.dragOverBackgroundColor
               } else {
+                  this.$refs.iconToggle.style.backgroundColor = "inherit"
                   this.$el.style.backgroundColor = "inherit"
               }
           },
@@ -237,7 +241,6 @@
 
           const self = this
           const events = {
-              'click': this.handleItemClick,
               'mouseover': this.handleItemMouseOver,
               'mouseout': this.handleItemMouseOut
           }
@@ -282,10 +285,15 @@
           },
           handleDragLeave ($event, self, model) {
             this.isDragEnter = false
-            this.dragOverCount -= 1
             this.resetDragOverStateBubble()
+            this.dragOverCount -= 1
+            
           },
           getDragoverPosition ($event) {
+            // the 24th pixel is the width of the +/- icon
+            // it is used to determine wether we want to close the folder we 
+            // are dragging over
+            const leftPixelThreshold = 24
             const targetRect = this.$el.getBoundingClientRect()
             const { clientX: mouseX, clientY: mouseY } = $event
 
@@ -300,7 +308,10 @@
               inside: yInRect <= this.height,
               top: yInRect <= oneThirdNodeHeight,
               bottom: yInRect >= (this.height -oneThirdNodeHeight) && yInRect <= this.height,
+              left: xInRect <= leftPixelThreshold
             }
+
+            positionInTarget.topLeft = positionInTarget.inside && positionInTarget.left
 
             return positionInTarget
           },
@@ -314,41 +325,72 @@
               this.isDragEnter = true
             }
 
-            if (positionInTarget.top) {
-              this.isDraggingOverUpwards = true
-              this.isDraggingOverDownwards = false
-              this.$el.previousElementSibling.style.background = "black"
-              this.$el.previousElementSibling.style.backgroundColor = "black"
-              this.$el.nextElementSibling.style.background = "transparent"
-            } else if (positionInTarget.bottom) {
-              this.isDraggingOverUpwards = false
-              this.isDraggingOverDownwards = true
-              this.$el.previousElementSibling.style.background = "transparent"
-              this.$el.nextElementSibling.style.background = "black"
+            if (positionInTarget.topLeft && this.isFolder && this.model.opened && !this.isCloseFolderScheduled) {
+              this.closeScheduleFolder()
             } else {
-              this.$el.previousElementSibling.style.background = "transparent"
-              this.$el.nextElementSibling.style.background = "transparent"
-              this.isDraggingOverUpwards = false
-              this.isDraggingOverDownwards = false
-              if (this.isFolder && !this.isDragOverFolderOpenScheduled && !this.model.opened) {
-                this.openFolderForDrop()
+              if (positionInTarget.top) {
+                this.isDraggingOverUpwards = true
+                this.isDraggingOverDownwards = false
+                this.$el.previousElementSibling.style.background = "black"
+                this.$el.previousElementSibling.style.backgroundColor = "black"
+                this.$el.nextElementSibling.style.background = "transparent"
+              } else if (positionInTarget.bottom) {
+                this.isDraggingOverUpwards = false
+                this.isDraggingOverDownwards = true
+                this.$el.previousElementSibling.style.background = "transparent"
+                this.$el.nextElementSibling.style.background = "black"
+              } else {
+                this.$el.previousElementSibling.style.background = "transparent"
+                this.$el.nextElementSibling.style.background = "transparent"
+                this.isDraggingOverUpwards = false
+                this.isDraggingOverDownwards = false
+                if (!positionInTarget.topLeft && this.isFolder && !this.isDragOverFolderOpenScheduled && !this.model.opened) {
+                  this.openFolderForDrop()
+                }
+                // if this is a collection, and no open is scheduled - schedule
+                // an open for after 1 second, and in the open check if the
+                // cursor is still over the collection. If it is, then open the
+                // the collection.
               }
-              // if this is a collection, and no open is scheduled - schedule
-              // an open for after 1 second, and in the open check if the
-              // cursor is still over the collection. If it is, then open the
-              // the collection.
             }
+
+            
             this.onItemDragOver($event, self, model)
           },
           openFolderForDrop () {
             this.isDragOverFolderOpenScheduled = true
             const node = this
             setTimeout(() => {
-              node.handleItemToggle()
+              // if we schedule the open but then our cursor leaves and reenters
+              // the folder, we may accidentally schedule the opening several
+              // times
+              if (node.dragOverCount > 0 && !this.model.opened) {
+                node.handleItemToggle()
+              }
+
+              this.isDragOverFolderOpenScheduled = false              
+            }, this.onDragOverOpenFolderTimeout);
+          },
+          closeScheduleFolder () {
+            this.isCloseFolderScheduled = true
+            const node = this
+            setTimeout(() => {
+              // in case we accidentally schedule the close several times
+              if (this.model.opened) {
+                node.handleItemToggle()
+              }
+              
+              this.isCloseFolderScheduled = false
             }, this.onDragOverOpenFolderTimeout);
           },
           handleItemDrop (e, oriNode, oriItem) {
             this.$el.style.backgroundColor = "inherit"
+            // dragOverCount is outside of resetDragOverState, because
+            // we want to reset everything else on drag leave, but not the
+            // dragOverCount, as lets us know if we should open a folder or not.
+            // The dragLeave event is fired for all child dom elements of each 
+            // node.
+            this.dragOverCount = 0
             // Used to specify wether we are reordering items on the same
             // level. So wether we want to put the dragged item before or
             // after the current item.
@@ -371,9 +413,9 @@
           },
           resetDragOverState (node) {
             node.isDragOverFolderOpenScheduled = false
+            node.isCloseFolderScheduled = false
             node.isDraggingOverUpwards = false
             node.isDraggingOverDownwards = false
-            node.dragOverCount = 0
             node.isDragEnter = false
           },
           resetDragOverStateBubble () {
