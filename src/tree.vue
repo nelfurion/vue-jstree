@@ -156,20 +156,23 @@ export default {
       );
       let self = this;
       node.addBefore = function(data, selectedNode) {
-        let newItem = self.initializeDataItem(data);
-        let index = selectedNode.parentItem.findIndex(t => t.id === node.id);
-        selectedNode.parentItem.splice(index, 0, newItem);
+        let newItem = self.initializeDataItem(data)
+        let index = selectedNode.parentItem.findIndex(t => t.id === node.id)
+        selectedNode.parentItem.splice(index, 0, newItem)
+        self.$emit('update:data', this.data)
       };
       node.addAfter = function(data, selectedNode) {
-        let newItem = self.initializeDataItem(data);
-        let index =
-          selectedNode.parentItem.findIndex(t => t.id === node.id) + 1;
-        selectedNode.parentItem.splice(index, 0, newItem);
+        let newItem = self.initializeDataItem(data)
+        let index = selectedNode.parentItem.findIndex(t => t.id === node.id) + 1
+        selectedNode.parentItem.splice(index, 0, newItem)
+        self.$emit('update:data', this.data)
       };
       node.addChild = function(data) {
+        node[self.childrenFieldName] = node[self.childrenFieldName] || []
         let newItem = self.initializeDataItem(data);
         node.opened = true;
-        node[self.childrenFieldName].push(newItem);
+        node[self.childrenFieldName].unshift(newItem);
+        self.$emit('update:data', this.data)
       };
       node.openChildren = function() {
         node.opened = true;
@@ -321,6 +324,7 @@ export default {
       this.$emit("item-drag-end", oriNode, oriItem, e);
     },
     async onItemDrop(e, oriNode, oriItem, reorder) {
+      const dataIsUpdated = false
       if (!this.draggable || !!oriItem.dropDisabled) {
         return false
       }
@@ -398,19 +402,16 @@ export default {
               if (this.draggedItem.parentItem) {
                 this.draggedItem.parentItem.splice(this.draggedItem.index, 1)
               }
-              
+
               oriItem.addAfter(this.draggedItem.item, oriNode)
             })
           }
         } else {
-          if (!!oriItem[this.childrenFieldName] && oriItem.isFolder) {
-            oriItem[this.childrenFieldName].push(this.draggedItem.item)
-          } else if (oriItem.isFolder) {
-            oriItem[this.childrenFieldName] = [this.draggedItem.item]
-          } else {
+          if (!(!!oriItem[this.childrenFieldName] && oriItem.isFolder)) {
             return
           }
 
+          oriItem.addChild(this.draggedItem.item)
           oriItem.opened = true
           var draggedItem = this.draggedItem
           if (draggedItem.parentItem) {
