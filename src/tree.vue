@@ -159,20 +159,20 @@ export default {
         let newItem = self.initializeDataItem(data)
         let index = selectedNode.parentItem.findIndex(t => t.id === node.id)
         selectedNode.parentItem.splice(index, 0, newItem)
-        self.$emit('update:data', this.data)
+        self.$emit('update:data', self.data)
       };
       node.addAfter = function(data, selectedNode) {
         let newItem = self.initializeDataItem(data)
         let index = selectedNode.parentItem.findIndex(t => t.id === node.id) + 1
         selectedNode.parentItem.splice(index, 0, newItem)
-        self.$emit('update:data', this.data)
+        self.$emit('update:data', self.data)
       };
       node.addChild = function(data) {
         node[self.childrenFieldName] = node[self.childrenFieldName] || []
         let newItem = self.initializeDataItem(data);
         node.opened = true;
         node[self.childrenFieldName].unshift(newItem);
-        self.$emit('update:data', this.data)
+        self.$emit('update:data', self.data)
       };
       node.openChildren = function() {
         node.opened = true;
@@ -423,6 +423,10 @@ export default {
           this.$emit("item-drop", oriNode, oriItem, draggedItem.item, e)
         }
       }
+    },
+    appendData (newData) {
+      this.initializeData(newData)
+      this.data.push(...newData)
     }
   },
   created() {

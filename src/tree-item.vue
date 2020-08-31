@@ -54,7 +54,7 @@
       :style="groupStyle"
     >
       <li class="tree-item js-tree-position-placeholder js-tree-position-before-children" :bookmark-id="model.id"></li>
-      <template v-for="(child, index) in model.visibleChildren">
+      <template v-for="(child, index) in model[childrenFieldName]">
         <tree-item
           :key="index"
           :data="child"
@@ -237,8 +237,6 @@
           }
       },
       created () {
-          this.model.visibleChildren = this.model[this.childrenFieldName] // .slice(0, 20)
-
           const self = this
           const events = {
               'mouseover': this.handleItemMouseOver,
