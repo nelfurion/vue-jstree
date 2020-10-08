@@ -440,15 +440,21 @@
           handleGroupMaxHeight () {
               if (!!this.allowTransition) {
                   let length = 0
-                  let childHeight = 0
+                  let childrenHeight = 0
                   if (this.model.opened) {
                       length = this.$children.length
-                      for (let children of this.$children) {
-                          childHeight += children.maxHeight || 0
+                      for (let child of this.$children) {
+                          childrenHeight += child.maxHeight || 0
                       }
                   }
-                  this.maxHeight = length * this.height + childHeight
+
+                  const styles = window.getComputedStyle(this.$el)
+                  const paddingTop = Number(styles.paddingTop.split('px')[0])
+                  const paddingBottom = Number(styles.paddingBottom.split('px')[0])
+
+                  this.maxHeight = length * (this.height + paddingTop + paddingBottom) + childrenHeight
                   this.maxHeight += length + 1 // position placeholders
+
                   if (this.$parent.$options._componentTag === 'tree-item') {
                       this.$parent.handleGroupMaxHeight()
                   }
