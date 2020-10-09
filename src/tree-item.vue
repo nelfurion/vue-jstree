@@ -229,6 +229,18 @@
               this.$el.style.backgroundColor = "inherit"
             }
 
+            if (newValue.top) {
+                this.$el.previousElementSibling.style.background = "black"
+                this.$el.previousElementSibling.style.backgroundColor = "black"
+                this.$el.nextElementSibling.style.background = "transparent"
+              } else if (newValue.bottom) {
+                this.$el.previousElementSibling.style.background = "transparent"
+                this.$el.nextElementSibling.style.background = "black"
+              } else {
+                this.$el.previousElementSibling.style.background = "transparent"
+                this.$el.nextElementSibling.style.background = "transparent"
+              }
+
             if (newValue.mouseTreePosition.fromTop > 0 && newValue.mouseWindowPosition.fromTop < 50) {
               window.scrollBy({ top: -50, left: 0, behavior: 'smooth' })
             } else if (newValue.mouseTreePosition.fromBottom > 0 && newValue.mouseWindowPosition.fromBottom < 50) {
@@ -377,23 +389,12 @@
             if (this.dragPositionInTarget.topLeft && this.isFolder && this.model.opened && !this.isCloseFolderScheduled) {
               this.closeScheduleFolder()
             } else {
-              if (this.dragPositionInTarget.top) {
-                this.$el.previousElementSibling.style.background = "black"
-                this.$el.previousElementSibling.style.backgroundColor = "black"
-                this.$el.nextElementSibling.style.background = "transparent"
-              } else if (this.dragPositionInTarget.bottom) {
-                this.$el.previousElementSibling.style.background = "transparent"
-                this.$el.nextElementSibling.style.background = "black"
-              } else {
-                this.$el.previousElementSibling.style.background = "transparent"
-                this.$el.nextElementSibling.style.background = "transparent"
-                if (!this.dragPositionInTarget.topLeft && this.isFolder && !this.isDragOverFolderOpenScheduled && !this.model.opened) {
-                  this.openFolderForDrop()
-                }
-                // if this is a collection, and no open is scheduled - schedule
+              if (this.dragPositionInTarget.verticalCenter && !this.dragPositionInTarget.topLeft && this.isFolder && !this.isDragOverFolderOpenScheduled && !this.model.opened) {
+                 // if this is a collection, and no open is scheduled - schedule
                 // an open for after 1 second, and in the open check if the
                 // cursor is still over the collection. If it is, then open the
                 // the collection.
+                this.openFolderForDrop()
               }
             }
 
