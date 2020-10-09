@@ -410,13 +410,14 @@ export default {
           if (!(!!oriItem[this.childrenFieldName] && oriItem.isFolder)) {
             return
           }
-
-          oriItem.addChild(this.draggedItem.item)
+          
           oriItem.opened = true
           var draggedItem = this.draggedItem
           if (draggedItem.parentItem) {
             this.$nextTick(() => {
               draggedItem.parentItem.splice(draggedItem.index, 1)
+
+              oriItem.addChild(draggedItem.item)
             })
           }
 
