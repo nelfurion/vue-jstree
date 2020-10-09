@@ -228,6 +228,12 @@
               this.$refs.iconToggle.style.backgroundColor = "inherit"
               this.$el.style.backgroundColor = "inherit"
             }
+
+            if (newValue.mouseTreePosition.fromTop > 0 && newValue.mouseWindowPosition.fromTop < 50) {
+              window.scrollBy({ top: -50, left: 0, behavior: 'smooth' })
+            } else if (newValue.mouseTreePosition.fromBottom > 0 && newValue.mouseWindowPosition.fromBottom < 50) {
+              window.scrollBy({ top: 50, left: 0, behavior: 'smooth' })
+            }
           },
           data (newValue) {
               this.model = newValue
@@ -324,6 +330,7 @@
             // are dragging over
             const leftPixelThreshold = 24
             const targetRect = this.$el.getBoundingClientRect()
+            const treeRect = document.querySelector('div[role="tree"]').getBoundingClientRect()
             const { clientX: mouseX, clientY: mouseY } = $event
 
             const [ xInRect, yInRect ] = [
@@ -334,6 +341,18 @@
             const oneThirdNodeHeight = this.height / 3
 
             const dragPositionInTarget = {
+              mouseWindowPosition: {
+                x: mouseX,
+                y: mouseY,
+                fromBottom: window.innerHeight - mouseY,
+                fromTop: mouseY
+              },
+              mouseTreePosition: {
+                x: mouseX - treeRect.left,
+                y: mouseY - treeRect.top,
+                fromBottom: treeRect.bottom - mouseY,
+                fromTop: mouseY - treeRect.top
+              },
               inside: yInRect <= this.height,
               verticalCenter: yInRect > oneThirdNodeHeight && yInRect < (this.height - oneThirdNodeHeight),
               top: yInRect <= oneThirdNodeHeight,
