@@ -293,6 +293,7 @@
           },
           handleDragEnd($event, self, model) {
             this.isBeingDragged = false
+            this.resetDragOverStateBubble()
             this.onItemDragEnd($event, self, model)
           },
           handleDragEnter ($event, self, model) {
@@ -408,7 +409,7 @@
               // if we schedule the open but then our cursor leaves and reenters
               // the folder, we may accidentally schedule the opening several
               // times
-              if (node.dragOverCount > 0 && !this.model.opened) {
+              if (this.dragPositionInTarget.verticalCenter && !this.model.opened) {
                 node.handleItemToggle()
               }
 
