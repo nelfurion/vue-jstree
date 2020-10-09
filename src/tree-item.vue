@@ -148,6 +148,7 @@
               dragOverCount: 0,
               isDraggingOverUpwards: false,
               isDraggingOverDownwards: false,
+              dragPositionInTarget: {},
               isDragOverFolderOpenScheduled: false,
               model: this.data,
               maxHeight: 0,
@@ -213,17 +214,20 @@
                   'transition-property': !!this.allowTransition ? 'max-height' : '',
                   'display': !!this.allowTransition ? 'block' : (this.model.opened ? 'block' : 'none')
               }
+          },
+          shouldShowBackgroundColor () {
+            return !!this.dragPositionInTarget.verticalCenter
           }
       },
       watch: {
-          isDragEnter (newValue) {
-              if (newValue) {
-                  this.$refs.iconToggle.style.backgroundColor = "lightgrey"
-                  this.$el.style.backgroundColor = this.dragOverBackgroundColor
-              } else {
-                  this.$refs.iconToggle.style.backgroundColor = "inherit"
-                  this.$el.style.backgroundColor = "inherit"
-              }
+          dragPositionInTarget (newValue) {
+            if (newValue.verticalCenter) {
+              this.$refs.iconToggle.style.backgroundColor = "lightgrey"
+              this.$el.style.backgroundColor = this.dragOverBackgroundColor
+            } else {
+              this.$refs.iconToggle.style.backgroundColor = "inherit"
+              this.$el.style.backgroundColor = "inherit"
+            }
           },
           data (newValue) {
               this.model = newValue
@@ -274,20 +278,42 @@
             this.onItemDragEnd($event, self, model)
           },
           handleDragEnter ($event, self, model) {
-            const positionInTarget = this.getDragoverPosition($event)
-            if (positionInTarget.inside) {
+            this.getDragoverPosition($event)
+            if (this.dragPositionInTarget.inside) {
               this.isDragEnter = true
             }
 
             this.dragOverCount += 1
           },
           handleDragLeave ($event, self, model) {
-            this.isDragEnter = false
+            this.getDragoverPosition($event)
+            if (!this.dragPositionInTarget.inside) {
+              this.isDragEnter = false
+            }
+
             this.resetDragOverStateBubble()
-            this.dragOverCount -= 1
-            
+
+            if (this.dragOverCount) {
+              this.dragOverCount -= 1
+            }
           },
           getDragoverPosition ($event) {
+            this.dragPositionInTarget = this.calculateDragPositionInTarget($event)
+
+            if (this.dragPositionInTarget.top) {
+              this.isDraggingOverUpwards = true
+              this.isDraggingOverDownwards = false
+            } else if (this.dragPositionInTarget.bottom) {
+              this.isDraggingOverUpwards = false
+              this.isDraggingOverDownwards = true
+            } else {
+              this.isDraggingOverUpwards = false
+              this.isDraggingOverDownwards = false
+            }
+
+            return this.dragPositionInTarget
+          },
+          calculateDragPositionInTarget ($event) {
             // the 24th pixel is the width of the +/- icon
             // it is used to determine wether we want to close the folder we 
             // are dragging over
@@ -302,47 +328,42 @@
 
             const oneThirdNodeHeight = this.height / 3
 
-            const positionInTarget = {
+            const dragPositionInTarget = {
               inside: yInRect <= this.height,
+              verticalCenter: yInRect > oneThirdNodeHeight && yInRect < (this.height - oneThirdNodeHeight),
               top: yInRect <= oneThirdNodeHeight,
               bottom: yInRect >= (this.height -oneThirdNodeHeight) && yInRect <= this.height,
               left: xInRect <= leftPixelThreshold
             }
 
-            positionInTarget.topLeft = positionInTarget.inside && positionInTarget.left
+            dragPositionInTarget.topLeft = dragPositionInTarget.inside && dragPositionInTarget.left
 
-            return positionInTarget
+            return dragPositionInTarget
           },
           handleDragOver ($event, self, model) {
             if (this.isBeingDragged) {
               return
             }
 
-            const positionInTarget = this.getDragoverPosition($event)
-            if (positionInTarget.inside) {
+            this.getDragoverPosition($event)
+            if (this.dragPositionInTarget.inside) {
               this.isDragEnter = true
             }
 
-            if (positionInTarget.topLeft && this.isFolder && this.model.opened && !this.isCloseFolderScheduled) {
+            if (this.dragPositionInTarget.topLeft && this.isFolder && this.model.opened && !this.isCloseFolderScheduled) {
               this.closeScheduleFolder()
             } else {
-              if (positionInTarget.top) {
-                this.isDraggingOverUpwards = true
-                this.isDraggingOverDownwards = false
+              if (this.dragPositionInTarget.top) {
                 this.$el.previousElementSibling.style.background = "black"
                 this.$el.previousElementSibling.style.backgroundColor = "black"
                 this.$el.nextElementSibling.style.background = "transparent"
-              } else if (positionInTarget.bottom) {
-                this.isDraggingOverUpwards = false
-                this.isDraggingOverDownwards = true
+              } else if (this.dragPositionInTarget.bottom) {
                 this.$el.previousElementSibling.style.background = "transparent"
                 this.$el.nextElementSibling.style.background = "black"
               } else {
                 this.$el.previousElementSibling.style.background = "transparent"
                 this.$el.nextElementSibling.style.background = "transparent"
-                this.isDraggingOverUpwards = false
-                this.isDraggingOverDownwards = false
-                if (!positionInTarget.topLeft && this.isFolder && !this.isDragOverFolderOpenScheduled && !this.model.opened) {
+                if (!this.dragPositionInTarget.topLeft && this.isFolder && !this.isDragOverFolderOpenScheduled && !this.model.opened) {
                   this.openFolderForDrop()
                 }
                 // if this is a collection, and no open is scheduled - schedule
