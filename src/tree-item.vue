@@ -221,7 +221,7 @@
       },
       watch: {
           dragPositionInTarget (newValue) {
-            if (newValue.verticalCenter) {
+            if (newValue.verticalCenter && this.model.type === 'folder') {
               this.$refs.iconToggle.style.backgroundColor = "lightgrey"
               this.$el.style.backgroundColor = this.dragOverBackgroundColor
             } else {
@@ -291,7 +291,12 @@
               this.isDragEnter = false
             }
 
-            this.resetDragOverStateBubble()
+            // This should be inside otherwise dragging out of fodlers
+            // does not work. - E.g. draggin something from a fodler, under
+            // the last folder in the root level.
+            if (this.dragOverCount === 0) {
+              this.resetDragOverStateBubble()
+            }
 
             if (this.dragOverCount) {
               this.dragOverCount -= 1
