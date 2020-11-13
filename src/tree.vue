@@ -41,6 +41,7 @@
   </div>
 </template>
 <script lang="js">
+import treeSearch from 'tree-search'
 import TreeItem from "./tree-item.vue";
 
 let ITEM_ID = 0;
@@ -115,16 +116,21 @@ export default {
     }
   },
   methods: {
-    initializeData(items) {
+    findTreeItem (id) {
+      const find = treeSearch(this.childrenFieldName)
+      return find(this.data, 'id', id)
+    },
+    initializeData(items, parent) {
+      parent = parent || { id: 'root' }
       if (items && items.length > 0) {
         for (let i in items) {
-          var dataItem = this.initializeDataItem(items[i]);
+          var dataItem = this.initializeDataItem(items[i], parent.id);
           items[i] = dataItem;
-          this.initializeData(items[i][this.childrenFieldName]);
+          this.initializeData(items[i][this.childrenFieldName], items[i]);
         }
       }
     },
-    initializeDataItem(item) {
+    initializeDataItem(item, parentId) {
       function Model(
         item,
         textFieldName,
@@ -154,25 +160,28 @@ export default {
         ),
         item
       );
+
+      node.parentId = parentId /* || item.id */ || 'root';
+
       let self = this;
       node.addBefore = function(data, selectedNode) {
-        let newItem = self.initializeDataItem(data)
+        let newItem = self.initializeDataItem(data, node.parentId)
         let index = selectedNode.parentItem.findIndex(t => t.id === node.id)
         selectedNode.parentItem.splice(index, 0, newItem)
-        self.$emit('update:data', self.data)
+        self.$emit('update:add-before', node.id, newItem)
       };
       node.addAfter = function(data, selectedNode) {
-        let newItem = self.initializeDataItem(data)
+        let newItem = self.initializeDataItem(data, node.parentId)
         let index = selectedNode.parentItem.findIndex(t => t.id === node.id) + 1
         selectedNode.parentItem.splice(index, 0, newItem)
-        self.$emit('update:data', self.data)
+        self.$emit('update:add-after', node.id, newItem)
       };
       node.addChild = function(data) {
         node[self.childrenFieldName] = node[self.childrenFieldName] || []
-        let newItem = self.initializeDataItem(data);
+        let newItem = self.initializeDataItem(data, node.id);
         node.opened = true;
         node[self.childrenFieldName].unshift(newItem);
-        self.$emit('update:data', self.data)
+        self.$emit('update:add-child', node.id, newItem)
       };
       node.openChildren = function() {
         node.opened = true;
@@ -281,12 +290,18 @@ export default {
       if (!this.draggable || oriItem.dragDisabled) return false;
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text", null);
+      
+      // allows dragging of items from one vue-jstree to another vue-jstree
+      e.dataTransfer.items.add(
+        JSON.stringify(oriItem), 
+        'text/json'
+      )
+
       this.draggedElm = e.target;
       this.draggedItem = {
         node: oriNode,
         item: oriItem,
         parentItem: oriNode.parentItem,
-        index: oriNode.parentItem.findIndex(t => t.id === oriItem.id)
       };
 
       this.$emit("item-drag-start", oriNode, oriItem, e);
@@ -361,8 +376,23 @@ export default {
       // Lets put the eventData in the this.draggedItem so we change as little
       // code below as possible.
       if (eventData) {
+        // In case we are dragging an item between vue-jstrees splicing the 
+        // parentItem from the eventData will remove the item from the source
+        // when adding it to the destination tree. This will work even when 
+        // reordering items in the same tree.
+        
+        let parentItem = null
+        if (eventData.parentId === 'root') {
+          parentItem = this.data
+        } else if (eventData.parentId) {
+          parentItem = this.findTreeItem(eventData.parentId)
+          parentItem = parentItem ? parentItem[this.childrenFieldName] : null
+        }
+
         this.draggedItem = {
-          item: this.initializeDataItem(eventData)
+          index: parentItem ? parentItem.findIndex(t => t.id === eventData.id) : null,
+          item: this.initializeDataItem(eventData, eventData.parentId),
+          parentItem,
         }
       }
 
@@ -388,6 +418,7 @@ export default {
         // The addBefore and addAfter functions seem to be static functions, and
         // there doesn't appear to be any need for them to be called on a specific
         // node.
+        console.log(oriItem)
         if (reorder.before || reorder.after) {
           if (reorder.before) {
             this.$nextTick(() => {
@@ -428,7 +459,7 @@ export default {
     appendData (newData) {
       this.initializeData(newData)
       this.data.push(...newData)
-    }
+    },
   },
   created() {
     this.initializeData(this.data);
@@ -437,6 +468,11 @@ export default {
     if (this.async) {
       this.$set(this.data, 0, this.initializeLoading());
       this.handleAsyncLoad(this.data, this);
+    }
+  },
+  watch: {
+    data: function (val) {
+      this.initializeData(val)
     }
   },
   components: {

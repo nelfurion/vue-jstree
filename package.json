@@ -6,14 +6,16 @@
     ]
   ],
   "_from": "github:nelfurion/vue-jstree#master",
-  "_id": "vue-jstree@github:nelfurion/vue-jstree#c145eee2c9201041a91fb0b39c0c83dec77bb487",
+  "_id": "vue-jstree@2.1.6",
   "_inBundle": false,
   "_integrity": "",
   "_location": "/vue-jstree",
   "_phantomChildren": {},
   "_requested": {
     "type": "git",
-    "raw": "github:nelfurion/vue-jstree#master",
+    "raw": "vue-jstree@github:nelfurion/vue-jstree#master",
+    "name": "vue-jstree",
+    "escapedName": "vue-jstree",
     "rawSpec": "github:nelfurion/vue-jstree#master",
     "saveSpec": "github:nelfurion/vue-jstree#master",
     "fetchSpec": null,
@@ -22,8 +24,8 @@
   "_requiredBy": [
     "/"
   ],
-  "_resolved": "github:nelfurion/vue-jstree#c145eee2c9201041a91fb0b39c0c83dec77bb487",
-  "_spec": "github:nelfurion/vue-jstree#master",
+  "_resolved": "github:nelfurion/vue-jstree#65e303cc946c36da0fa886f0217627d8180b7089",
+  "_spec": "vue-jstree@github:nelfurion/vue-jstree#master",
   "_where": "/mnt/c/Users/nelfurion/Desktop/extension",
   "author": {
     "name": "zdy1988",
@@ -32,7 +34,11 @@
   "bugs": {
     "url": "https://github.com/zdy1988/vue-jstree/issues"
   },
-  "dependencies": {},
+  "bundleDependencies": false,
+  "dependencies": {
+    "tree-search": "github:nelfurion/tree-search#master"
+  },
+  "deprecated": false,
   "description": "a tree plugin for vue2",
   "devDependencies": {
     "babel-core": "^6.0.0",
