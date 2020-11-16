@@ -290,8 +290,7 @@ export default {
       if (!this.draggable || oriItem.dragDisabled) return false;
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text", null);
-      
-      // allows dragging of items from one vue-jstree to another vue-jstree
+
       e.dataTransfer.items.add(
         JSON.stringify(oriItem), 
         'text/json'
@@ -380,8 +379,8 @@ export default {
         // parentItem from the eventData will remove the item from the source
         // when adding it to the destination tree. This will work even when 
         // reordering items in the same tree.
-        
         let parentItem = null
+
         if (eventData.parentId === 'root') {
           parentItem = this.data
         } else if (eventData.parentId) {
@@ -418,43 +417,74 @@ export default {
         // The addBefore and addAfter functions seem to be static functions, and
         // there doesn't appear to be any need for them to be called on a specific
         // node.
-        console.log(oriItem)
-        if (reorder.before || reorder.after) {
-          if (reorder.before) {
-            this.$nextTick(() => {
-              if (this.draggedItem.parentItem) {
-                this.draggedItem.parentItem.splice(this.draggedItem.index, 1)
-              }
+        this.addDraggedItem(this.draggedItem, oriItem, oriNode, reorder)
+        this.$emit("item-drop", oriNode, oriItem, this.draggedItem.item, e)
+      }
+    },
+    /**
+      itemDescription = {
+        item: {},
+        index: Number
+      }
+    */
+    addDraggedItem (draggedItemDescription, dropTargetData, dropTargetNode, reorder) {
+      if (dropTargetData.id === draggedItemDescription.item.id) {
+        // We are dropping the same item over / under / inside itself
+        return
+      }
 
-              oriItem.addBefore(this.draggedItem.item, oriNode)
-            })
-          } else if (reorder.after) {
-            this.$nextTick(() => {
-              if (this.draggedItem.parentItem) {
-                this.draggedItem.parentItem.splice(this.draggedItem.index, 1)
-              }
+      let action = null
+      if (reorder.before) {
+        action = 'addBefore'
+      } else if (reorder.after) {
+        action = 'addAfter'
+      } else {
+        action = 'addChild'
+        if (!this.isItemFolder(dropTargetData)) {
+          return
+        }
+        
+        dropTargetData.opened = true
+      }
 
-              oriItem.addAfter(this.draggedItem.item, oriNode)
-            })
-          }
-        } else {
-          if (!(!!oriItem[this.childrenFieldName] && oriItem.isFolder)) {
-            return
-          }
-          
-          oriItem.opened = true
-          var draggedItem = this.draggedItem
-          if (draggedItem.parentItem) {
-            this.$nextTick(() => {
-              draggedItem.parentItem.splice(draggedItem.index, 1)
-
-              oriItem.addChild(draggedItem.item)
-            })
-          }
-
-          this.$emit("item-drop", oriNode, oriItem, draggedItem.item, e)
+      this.$nextTick(() => {
+        // If the dragged item has a parent item and that parent item
+        // has the draggedItem - e.g. this will always be true for items
+        // dragged in their own tree, but may not be true for items dragged
+        // to different trees.
+        this.removeItemFromParentArray(
+          draggedItemDescription.parentItem, 
+          draggedItemDescription
+        )
+        if (action === 'addChild') { 
+          dropTargetData.addChild(draggedItemDescription.item)
+        } else if (action === 'addBefore') {
+          dropTargetData.addBefore(draggedItemDescription.item, dropTargetNode)
+        } else if (action === 'addAfter') {
+          dropTargetData.addAfter(draggedItemDescription.item, dropTargetNode)
+        }
+      })
+    },
+    /**
+      itemDescription = {
+        item: {},
+        index: Number
+      }
+    */
+    removeItemFromParentArray (parentArray, itemDescription) {
+      if (parentArray) {
+        if (this.arrayHasItem(parentArray, itemDescription.item)) {
+          parentArray.splice(itemDescription.index, 1)
         }
       }
+    },
+    isItemFolder (item) {
+      return !!item[this.childrenFieldName] && item.isFolder
+    },
+    arrayHasItem (array, item) {
+      const matches = array.filter(c => c.id === item.id)
+
+      return matches.length >= 1
     },
     appendData (newData) {
       this.initializeData(newData)
