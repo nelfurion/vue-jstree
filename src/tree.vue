@@ -400,13 +400,23 @@ export default {
           !eventData &&
           (
             this.draggedItem.parentItem === oriItem[this.childrenFieldName] ||
-            this.draggedItem.item === oriItem ||
             (oriItem[this.childrenFieldName] &&
               oriItem[this.childrenFieldName].findIndex(
                 t => t.id === this.draggedItem.item.id
               ) !== -1)
           )
         ) {
+          return
+        }
+
+        // Return if we are dragging an item next to / over itself.
+        if (this.draggedItem.item === oriItem) {
+          return
+        }
+
+        // Return if we are dragging next to an item that is a child of the
+        // dragged item - aka dragging the item into itself.
+        if (this.isChildOf(oriItem, this.draggedItem.item)) {
           return
         }
 
@@ -440,7 +450,7 @@ export default {
         action = 'addAfter'
       } else {
         action = 'addChild'
-        if (!this.isItemFolder(dropTargetData)) {
+        if (!this.isFolder(dropTargetData)) {
           return
         }
         
@@ -448,43 +458,93 @@ export default {
       }
 
       this.$nextTick(() => {
-        // If the dragged item has a parent item and that parent item
+        this.addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode)
+      })
+    },
+    addWithoutDuplicates (action, draggedItemDescription, dropTargetData, dropTargetNode) {
+      // If the dragged item has a parent item and that parent item
         // has the draggedItem - e.g. this will always be true for items
         // dragged in their own tree, but may not be true for items dragged
         // to different trees.
-        this.removeItemFromParentArray(
+        this.removeItemFromArray(
           draggedItemDescription.parentItem, 
           draggedItemDescription
         )
+
+        // We also need to remove the dropped item from the target destination
+        // if it already exists there. This can happen if e.g. we are moving
+        // a node from the root of one tree to a folder in another tree, and
+        // we try to repeat that action several times.
         if (action === 'addChild') { 
+          // remove from the target's children before adding it there
+          this.removeItemFromArray(
+            dropTargetData[this.childrenFieldName], 
+            draggedItemDescription
+          )
+
           dropTargetData.addChild(draggedItemDescription.item)
         } else if (action === 'addBefore') {
+          // remove from target's parent before adding it next to the target
+          this.removeItemFromArray(
+            dropTargetNode.parentItem, 
+            draggedItemDescription
+          )
+
           dropTargetData.addBefore(draggedItemDescription.item, dropTargetNode)
         } else if (action === 'addAfter') {
+          // remove from target's parent before adding it next to the target
+          this.removeItemFromArray(
+            dropTargetNode.parentItem, 
+            draggedItemDescription
+          )
+
           dropTargetData.addAfter(draggedItemDescription.item, dropTargetNode)
         }
-      })
     },
     /**
+      This is for legacy purposes.
       itemDescription = {
-        item: {},
-        index: Number
+        item: {}, // the item
+        index: Number // index of the iten in it's original parent
       }
     */
-    removeItemFromParentArray (parentArray, itemDescription) {
-      if (parentArray) {
-        if (this.arrayHasItem(parentArray, itemDescription.item)) {
-          parentArray.splice(itemDescription.index, 1)
+    removeItemFromArray (array, itemDescription) {
+      if (array) {
+        if (this.arrayHasItem(array, itemDescription.item)) {
+          const index = array.map(i => i.id).indexOf(itemDescription.item.id)
+          array.splice(index, 1)
         }
       }
     },
-    isItemFolder (item) {
+    // In the future, the isFolder property of the item should be used instead.
+    isFolder (item) {
       return !!item[this.childrenFieldName] && item.isFolder
     },
     arrayHasItem (array, item) {
       const matches = array.filter(c => c.id === item.id)
 
       return matches.length >= 1
+    },
+    /**
+    * @param {Item} item
+    * @returns {Array} parent items up to the root, including the item itself
+                      [item, ...parents]
+    */
+    itemPathToRoot (item) {
+      if (item.parentId === 'root') {
+        return [item]
+      }
+
+      let pathElements = null
+      const parent = this.findTreeItem(item.parentId)
+      pathElements = this.itemPathToRoot(parent)
+      pathElements.push(item)
+
+      return pathElements
+    },
+    isChildOf (item, parent) {
+      const pathToRoot = this.itemPathToRoot(item)
+      return pathToRoot.some(e => e.id === parent.id)
     },
     appendData (newData) {
       this.initializeData(newData)

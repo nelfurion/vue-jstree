@@ -954,7 +954,6 @@ var ITEM_HEIGHT_LARGE = 32;
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text", null);
 
-      // allows dragging of items from one vue-jstree to another vue-jstree
       e.dataTransfer.items.add(JSON.stringify(oriItem), 'text/json');
 
       this.draggedElm = e.target;
@@ -1003,7 +1002,7 @@ var ITEM_HEIGHT_LARGE = 32;
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e, oriNode, oriItem, reorder) {
         var _this = this;
 
-        var dataIsUpdated, eventData, _loop, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, item, parentItem, draggedItem;
+        var dataIsUpdated, eventData, _loop, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, item, parentItem;
 
         return regeneratorRuntime.wrap(function _callee$(_context2) {
           while (1) {
@@ -1123,8 +1122,8 @@ var ITEM_HEIGHT_LARGE = 32;
                   // parentItem from the eventData will remove the item from the source
                   // when adding it to the destination tree. This will work even when 
                   // reordering items in the same tree.
-
                   parentItem = null;
+
 
                   if (eventData.parentId === 'root') {
                     parentItem = this.data;
@@ -1143,11 +1142,11 @@ var ITEM_HEIGHT_LARGE = 32;
                 }
 
                 if (!this.draggedItem) {
-                  _context2.next = 48;
+                  _context2.next = 43;
                   break;
                 }
 
-                if (!(!eventData && (this.draggedItem.parentItem === oriItem[this.childrenFieldName] || this.draggedItem.item === oriItem || oriItem[this.childrenFieldName] && oriItem[this.childrenFieldName].findIndex(function (t) {
+                if (!(!eventData && (this.draggedItem.parentItem === oriItem[this.childrenFieldName] || oriItem[this.childrenFieldName] && oriItem[this.childrenFieldName].findIndex(function (t) {
                   return t.id === _this.draggedItem.item.id;
                 }) !== -1))) {
                   _context2.next = 37;
@@ -1157,6 +1156,22 @@ var ITEM_HEIGHT_LARGE = 32;
                 return _context2.abrupt("return");
 
               case 37:
+                if (!(this.draggedItem.item === oriItem)) {
+                  _context2.next = 39;
+                  break;
+                }
+
+                return _context2.abrupt("return");
+
+              case 39:
+                if (!this.isChildOf(oriItem, this.draggedItem.item)) {
+                  _context2.next = 41;
+                  break;
+                }
+
+                return _context2.abrupt("return");
+
+              case 41:
 
                 // oriItem is the drop target node's data - addBefore/After are defined here
                 // oriNode is the drop target node - node.parentItem is defined here
@@ -1165,57 +1180,10 @@ var ITEM_HEIGHT_LARGE = 32;
                 // The addBefore and addAfter functions seem to be static functions, and
                 // there doesn't appear to be any need for them to be called on a specific
                 // node.
-                console.log(oriItem);
+                this.addDraggedItem(this.draggedItem, oriItem, oriNode, reorder);
+                this.$emit("item-drop", oriNode, oriItem, this.draggedItem.item, e);
 
-                if (!(reorder.before || reorder.after)) {
-                  _context2.next = 42;
-                  break;
-                }
-
-                if (reorder.before) {
-                  this.$nextTick(function () {
-                    if (_this.draggedItem.parentItem) {
-                      _this.draggedItem.parentItem.splice(_this.draggedItem.index, 1);
-                    }
-
-                    oriItem.addBefore(_this.draggedItem.item, oriNode);
-                  });
-                } else if (reorder.after) {
-                  this.$nextTick(function () {
-                    if (_this.draggedItem.parentItem) {
-                      _this.draggedItem.parentItem.splice(_this.draggedItem.index, 1);
-                    }
-
-                    oriItem.addAfter(_this.draggedItem.item, oriNode);
-                  });
-                }
-                _context2.next = 48;
-                break;
-
-              case 42:
-                if (!!oriItem[this.childrenFieldName] && oriItem.isFolder) {
-                  _context2.next = 44;
-                  break;
-                }
-
-                return _context2.abrupt("return");
-
-              case 44:
-
-                oriItem.opened = true;
-                draggedItem = this.draggedItem;
-
-                if (draggedItem.parentItem) {
-                  this.$nextTick(function () {
-                    draggedItem.parentItem.splice(draggedItem.index, 1);
-
-                    oriItem.addChild(draggedItem.item);
-                  });
-                }
-
-                this.$emit("item-drop", oriNode, oriItem, draggedItem.item, e);
-
-              case 48:
+              case 43:
               case "end":
                 return _context2.stop();
             }
@@ -1229,6 +1197,121 @@ var ITEM_HEIGHT_LARGE = 32;
 
       return onItemDrop;
     }(),
+
+    /**
+      itemDescription = {
+        item: {},
+        index: Number
+      }
+    */
+    addDraggedItem: function addDraggedItem(draggedItemDescription, dropTargetData, dropTargetNode, reorder) {
+      var _this2 = this;
+
+      if (dropTargetData.id === draggedItemDescription.item.id) {
+        // We are dropping the same item over / under / inside itself
+        return;
+      }
+
+      var action = null;
+      if (reorder.before) {
+        action = 'addBefore';
+      } else if (reorder.after) {
+        action = 'addAfter';
+      } else {
+        action = 'addChild';
+        if (!this.isFolder(dropTargetData)) {
+          return;
+        }
+
+        dropTargetData.opened = true;
+      }
+
+      this.$nextTick(function () {
+        _this2.addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode);
+      });
+    },
+    addWithoutDuplicates: function addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode) {
+      // If the dragged item has a parent item and that parent item
+      // has the draggedItem - e.g. this will always be true for items
+      // dragged in their own tree, but may not be true for items dragged
+      // to different trees.
+      this.removeItemFromArray(draggedItemDescription.parentItem, draggedItemDescription);
+
+      // We also need to remove the dropped item from the target destination
+      // if it already exists there. This can happen if e.g. we are moving
+      // a node from the root of one tree to a folder in another tree, and
+      // we try to repeat that action several times.
+      if (action === 'addChild') {
+        // remove from the target's children before adding it there
+        this.removeItemFromArray(dropTargetData[this.childrenFieldName], draggedItemDescription);
+
+        dropTargetData.addChild(draggedItemDescription.item);
+      } else if (action === 'addBefore') {
+        // remove from target's parent before adding it next to the target
+        this.removeItemFromArray(dropTargetNode.parentItem, draggedItemDescription);
+
+        dropTargetData.addBefore(draggedItemDescription.item, dropTargetNode);
+      } else if (action === 'addAfter') {
+        // remove from target's parent before adding it next to the target
+        this.removeItemFromArray(dropTargetNode.parentItem, draggedItemDescription);
+
+        dropTargetData.addAfter(draggedItemDescription.item, dropTargetNode);
+      }
+    },
+
+    /**
+      This is for legacy purposes.
+      itemDescription = {
+        item: {}, // the item
+        index: Number // index of the iten in it's original parent
+      }
+    */
+    removeItemFromArray: function removeItemFromArray(array, itemDescription) {
+      if (array) {
+        if (this.arrayHasItem(array, itemDescription.item)) {
+          var index = array.map(function (i) {
+            return i.id;
+          }).indexOf(itemDescription.item.id);
+          array.splice(index, 1);
+        }
+      }
+    },
+
+    // In the future, the isFolder property of the item should be used instead.
+    isFolder: function isFolder(item) {
+      return !!item[this.childrenFieldName] && item.isFolder;
+    },
+    arrayHasItem: function arrayHasItem(array, item) {
+      var matches = array.filter(function (c) {
+        return c.id === item.id;
+      });
+
+      return matches.length >= 1;
+    },
+
+    /**
+    * @param {Item} item
+    * @returns {Array} parent items up to the root, including the item itself
+                      [item, ...parents]
+    */
+    itemPathToRoot: function itemPathToRoot(item) {
+      if (item.parentId === 'root') {
+        return [item];
+      }
+
+      var pathElements = null;
+      var parent = this.findTreeItem(item.parentId);
+      pathElements = this.itemPathToRoot(parent);
+      pathElements.push(item);
+
+      return pathElements;
+    },
+    isChildOf: function isChildOf(item, parent) {
+      var pathToRoot = this.itemPathToRoot(item);
+      return pathToRoot.some(function (e) {
+        return e.id === parent.id;
+      });
+    },
     appendData: function appendData(newData) {
       var _data;
 
