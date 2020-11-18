@@ -1,45 +1,26 @@
 {
-  "_args": [
-    [
-      "github:nelfurion/vue-jstree#master",
-      "/mnt/c/Users/nelfurion/Desktop/extension"
-    ]
+  "name": "vue-jstree",
+  "version": "2.1.6",
+  "description": "a tree plugin for vue2",
+  "keywords": [
+    "vue2",
+    "tree"
   ],
-  "_from": "github:nelfurion/vue-jstree#master",
-  "_id": "vue-jstree@2.1.6",
-  "_inBundle": false,
-  "_integrity": "",
-  "_location": "/vue-jstree",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "git",
-    "raw": "vue-jstree@github:nelfurion/vue-jstree#master",
-    "name": "vue-jstree",
-    "escapedName": "vue-jstree",
-    "rawSpec": "github:nelfurion/vue-jstree#master",
-    "saveSpec": "github:nelfurion/vue-jstree#master",
-    "fetchSpec": null,
-    "gitCommittish": "master"
-  },
-  "_requiredBy": [
-    "/"
-  ],
-  "_resolved": "github:nelfurion/vue-jstree#65e303cc946c36da0fa886f0217627d8180b7089",
-  "_spec": "vue-jstree@github:nelfurion/vue-jstree#master",
-  "_where": "/mnt/c/Users/nelfurion/Desktop/extension",
   "author": {
     "name": "zdy1988",
     "email": "virus_zhh@126.com"
   },
+  "main": "dist/vue-jstree.js",
+  "private": false,
   "bugs": {
     "url": "https://github.com/zdy1988/vue-jstree/issues"
   },
   "bundleDependencies": false,
   "dependencies": {
-    "tree-search": "github:nelfurion/tree-search#master"
+    "tree-search": "github:nelfurion/tree-search#master",
+    "tree-crawl": "^1.1.0"
   },
   "deprecated": false,
-  "description": "a tree plugin for vue2",
   "devDependencies": {
     "babel-core": "^6.0.0",
     "babel-loader": "^6.0.0",
@@ -57,14 +38,7 @@
     "webpack-dev-server": "^2.4.5"
   },
   "homepage": "https://github.com/zdy1988/vue-jstree#readme",
-  "keywords": [
-    "vue2",
-    "tree"
-  ],
   "license": "MIT",
-  "main": "dist/vue-jstree.js",
-  "name": "vue-jstree",
-  "private": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zdy1988/vue-jstree.git"
@@ -73,6 +47,5 @@
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
     "dev": "cross-env NODE_ENV=development webpack --watch --progress --watch-poll",
     "start": "cross-env NODE_ENV=production webpack --progress --hide-modules --watch --watch-poll"
-  },
-  "version": "2.1.6"
+  }
 }

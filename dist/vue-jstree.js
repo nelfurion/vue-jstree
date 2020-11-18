@@ -178,13 +178,13 @@ module.exports = function normalizeComponent (
 /***/ (function(module, exports, __webpack_require__) {
 
 function injectStyle (ssrContext) {
-  __webpack_require__(11)
+  __webpack_require__(12)
 }
 var Component = __webpack_require__(0)(
   /* script */
   __webpack_require__(3),
   /* template */
-  __webpack_require__(10),
+  __webpack_require__(11),
   /* styles */
   injectStyle,
   /* scopeId */
@@ -680,10 +680,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_tree_search__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_tree_search__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_tree_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_tree_search__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__tree_item_vue__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__tree_item_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__tree_item_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_tree_crawl__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_tree_crawl___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_tree_crawl__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__tree_item_vue__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__tree_item_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__tree_item_vue__);
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -691,6 +693,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 
 
 
@@ -742,7 +745,7 @@ var ITEM_HEIGHT_LARGE = 32;
 
   computed: {
     classes: function classes() {
-      return [{ tree: true }, { "tree-default": !this.size }, _defineProperty({}, "tree-default-" + this.size, !!this.size), { "tree-checkbox-selection": !!this.showCheckbox }, _defineProperty({}, this.klass, !!this.klass)];
+      return [{ tree: true }, { "tree-default": !this.size }, _defineProperty({}, 'tree-default-' + this.size, !!this.size), { "tree-checkbox-selection": !!this.showCheckbox }, _defineProperty({}, this.klass, !!this.klass)];
     },
     containerClasses: function containerClasses() {
       return [{ "tree-container-ul": true }, { "tree-children": true }, { "tree-wholerow-ul": !!this.wholeRow }, { "tree-no-dots": !!this.noDots }];
@@ -1015,7 +1018,7 @@ var ITEM_HEIGHT_LARGE = 32;
                   break;
                 }
 
-                return _context2.abrupt("return", false);
+                return _context2.abrupt('return', false);
 
               case 3:
 
@@ -1045,7 +1048,7 @@ var ITEM_HEIGHT_LARGE = 32;
                           eventData = _context.sent;
 
                         case 4:
-                        case "end":
+                        case 'end':
                           return _context.stop();
                       }
                     }
@@ -1064,7 +1067,7 @@ var ITEM_HEIGHT_LARGE = 32;
                 }
 
                 item = _step3.value;
-                return _context2.delegateYield(_loop(item), "t0", 14);
+                return _context2.delegateYield(_loop(item), 't0', 14);
 
               case 14:
                 _iteratorNormalCompletion3 = true;
@@ -1077,7 +1080,7 @@ var ITEM_HEIGHT_LARGE = 32;
 
               case 19:
                 _context2.prev = 19;
-                _context2.t1 = _context2["catch"](9);
+                _context2.t1 = _context2['catch'](9);
                 _didIteratorError3 = true;
                 _iteratorError3 = _context2.t1;
 
@@ -1111,7 +1114,7 @@ var ITEM_HEIGHT_LARGE = 32;
                   break;
                 }
 
-                return _context2.abrupt("return");
+                return _context2.abrupt('return');
 
               case 33:
 
@@ -1153,7 +1156,7 @@ var ITEM_HEIGHT_LARGE = 32;
                   break;
                 }
 
-                return _context2.abrupt("return");
+                return _context2.abrupt('return');
 
               case 37:
                 if (!(this.draggedItem.item === oriItem)) {
@@ -1161,7 +1164,7 @@ var ITEM_HEIGHT_LARGE = 32;
                   break;
                 }
 
-                return _context2.abrupt("return");
+                return _context2.abrupt('return');
 
               case 39:
                 if (!this.isChildOf(oriItem, this.draggedItem.item)) {
@@ -1169,7 +1172,7 @@ var ITEM_HEIGHT_LARGE = 32;
                   break;
                 }
 
-                return _context2.abrupt("return");
+                return _context2.abrupt('return');
 
               case 41:
 
@@ -1184,7 +1187,7 @@ var ITEM_HEIGHT_LARGE = 32;
                 this.$emit("item-drop", oriNode, oriItem, this.draggedItem.item, e);
 
               case 43:
-              case "end":
+              case 'end':
                 return _context2.stop();
             }
           }
@@ -1317,6 +1320,33 @@ var ITEM_HEIGHT_LARGE = 32;
 
       this.initializeData(newData);
       (_data = this.data).push.apply(_data, _toConsumableArray(newData));
+    },
+
+    /**
+      Adds a new item after the last root item.
+      e, oriNode, oriItem, reorder
+    */
+    appendAfterLastRootItemFromDropEvent: function appendAfterLastRootItemFromDropEvent(event) {
+      var lastRootItem = this.data[this.data.length - 1];
+      var lastRootItemComponent = this.getChildVueComponentForItem(lastRootItem);
+
+      this.onItemDrop(event, lastRootItemComponent, lastRootItem, {
+        after: true,
+        before: false
+      });
+    },
+    getChildVueComponentForItem: function getChildVueComponentForItem(item) {
+      var foundComponent = null;
+      __WEBPACK_IMPORTED_MODULE_1_tree_crawl___default()(this, function (node, context) {
+        if (node.data && node.data.id === item.id) {
+          foundComponent = node;
+          context.break();
+        }
+      }, { getChildren: function getChildren(node) {
+          return node.$children;
+        } });
+
+      return foundComponent;
     }
   },
   created: function created() {
@@ -1335,7 +1365,7 @@ var ITEM_HEIGHT_LARGE = 32;
     }
   },
   components: {
-    TreeItem: __WEBPACK_IMPORTED_MODULE_1__tree_item_vue___default.a
+    TreeItem: __WEBPACK_IMPORTED_MODULE_2__tree_item_vue___default.a
   }
 });
 
@@ -1436,6 +1466,313 @@ module.exports = function() {
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
+(function (global, factory) {
+	 true ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.crawl = factory());
+}(this, (function () { 'use strict';
+
+function Context(flags, cursor) {
+  this.flags = flags;
+  this.cursor = cursor;
+}
+Context.prototype = {
+  skip: function skip() {
+    this.flags.skip = true;
+  },
+  break: function _break() {
+    this.flags.break = true;
+  },
+  remove: function remove() {
+    this.flags.remove = true;
+  },
+  replace: function replace(node) {
+    this.flags.replace = node;
+  },
+  get parent() {
+    return this.cursor.parent;
+  },
+  get depth() {
+    return this.cursor.depth;
+  },
+  get level() {
+    return this.cursor.depth + 1;
+  },
+  get index() {
+    return this.cursor.index;
+  }
+};
+function ContextFactory(flags, cursor) {
+  return new Context(flags, cursor);
+}
+
+function Stack(initial) {
+  this.xs = [initial];
+  this.top = 0;
+}
+Stack.prototype = {
+  push: function push(x) {
+    this.top++;
+    if (this.top < this.xs.length) {
+      this.xs[this.top] = x;
+    } else {
+      this.xs.push(x);
+    }
+  },
+  pushArrayReverse: function pushArrayReverse(xs) {
+    for (var i = xs.length - 1; i >= 0; i--) {
+      this.push(xs[i]);
+    }
+  },
+  pop: function pop() {
+    var x = this.peek();
+    this.top--;
+    return x;
+  },
+  peek: function peek() {
+    return this.xs[this.top];
+  },
+  isEmpty: function isEmpty() {
+    return -1 === this.top;
+  }
+};
+function QueueFactory(initial) {
+  return new Stack(initial);
+}
+
+function DfsCursor() {
+  this.depth = 0;
+  this.stack = QueueFactory({ node: null, index: -1 });
+}
+DfsCursor.prototype = {
+  moveDown: function moveDown(node) {
+    this.depth++;
+    this.stack.push({ node: node, index: 0 });
+  },
+  moveUp: function moveUp() {
+    this.depth--;
+    this.stack.pop();
+  },
+  moveNext: function moveNext() {
+    this.stack.peek().index++;
+  },
+  get parent() {
+    return this.stack.peek().node;
+  },
+  get index() {
+    return this.stack.peek().index;
+  }
+};
+function CursorFactory() {
+  return new DfsCursor();
+}
+
+function Flags() {
+  this.break = false;
+  this.skip = false;
+  this.remove = false;
+  this.replace = null;
+}
+Flags.prototype = {
+  reset: function reset() {
+    this.break = false;
+    this.skip = false;
+    this.remove = false;
+    this.replace = null;
+  }
+};
+function FlagsFactory() {
+  return new Flags();
+}
+
+function isNotEmpty(xs) {
+  return xs && 0 !== xs.length;
+}
+
+function dfsPre(root, iteratee, getChildren) {
+  var flags = FlagsFactory();
+  var cursor = CursorFactory();
+  var context = ContextFactory(flags, cursor);
+  var stack = QueueFactory(root);
+  var dummy = Object.assign({}, root);
+  while (!stack.isEmpty()) {
+    var node = stack.pop();
+    if (node === dummy) {
+      cursor.moveUp();
+      continue;
+    }
+    flags.reset();
+    iteratee(node, context);
+    if (flags.break) break;
+    if (flags.remove) continue;
+    cursor.moveNext();
+    if (!flags.skip) {
+      if (flags.replace) {
+        node = flags.replace;
+      }
+      var children = getChildren(node);
+      if (isNotEmpty(children)) {
+        stack.push(dummy);
+        stack.pushArrayReverse(children);
+        cursor.moveDown(node);
+      }
+    }
+  }
+}
+
+function dfsPost(root, iteratee, getChildren) {
+  var flags = FlagsFactory();
+  var cursor = CursorFactory();
+  var context = ContextFactory(flags, cursor);
+  var stack = QueueFactory(root);
+  var ancestors = QueueFactory(null);
+  while (!stack.isEmpty()) {
+    var node = stack.peek();
+    var parent = ancestors.peek();
+    var children = getChildren(node);
+    flags.reset();
+    if (node === parent || !isNotEmpty(children)) {
+      if (node === parent) {
+        ancestors.pop();
+        cursor.moveUp();
+      }
+      stack.pop();
+      iteratee(node, context);
+      if (flags.break) break;
+      if (flags.remove) continue;
+      cursor.moveNext();
+    } else {
+      ancestors.push(node);
+      cursor.moveDown(node);
+      stack.pushArrayReverse(children);
+    }
+  }
+}
+
+var THRESHOLD = 32768;
+function Queue(initial) {
+  this.xs = [initial];
+  this.top = 0;
+  this.maxLength = 0;
+}
+Queue.prototype = {
+  enqueue: function enqueue(x) {
+    this.xs.push(x);
+  },
+  enqueueMultiple: function enqueueMultiple(xs) {
+    for (var i = 0, len = xs.length; i < len; i++) {
+      this.enqueue(xs[i]);
+    }
+  },
+  dequeue: function dequeue() {
+    var x = this.peek();
+    this.top++;
+    if (this.top === THRESHOLD) {
+      this.xs = this.xs.slice(this.top);
+      this.top = 0;
+    }
+    return x;
+  },
+  peek: function peek() {
+    return this.xs[this.top];
+  },
+  isEmpty: function isEmpty() {
+    return this.top === this.xs.length;
+  }
+};
+function QueueFactory$1(initial) {
+  return new Queue(initial);
+}
+
+function BfsCursor() {
+  this.depth = 0;
+  this.index = -1;
+  this.queue = QueueFactory$1({ node: null, arity: 1 });
+  this.levelNodes = 1;
+  this.nextLevelNodes = 0;
+}
+BfsCursor.prototype = {
+  store: function store(node, arity) {
+    this.queue.enqueue({ node: node, arity: arity });
+    this.nextLevelNodes += arity;
+  },
+  moveNext: function moveNext() {
+    this.index++;
+  },
+  moveForward: function moveForward() {
+    this.queue.peek().arity--;
+    this.levelNodes--;
+    if (0 === this.queue.peek().arity) {
+      this.index = 0;
+      this.queue.dequeue();
+    }
+    if (0 === this.levelNodes) {
+      this.depth++;
+      this.levelNodes = this.nextLevelNodes;
+      this.nextLevelNodes = 0;
+    }
+  },
+  get parent() {
+    return this.queue.peek().node;
+  }
+};
+function CursorFactory$1() {
+  return new BfsCursor();
+}
+
+function bfs(root, iteratee, getChildren) {
+  var flags = FlagsFactory();
+  var cursor = CursorFactory$1();
+  var context = ContextFactory(flags, cursor);
+  var queue = QueueFactory$1(root);
+  while (!queue.isEmpty()) {
+    var node = queue.dequeue();
+    flags.reset();
+    iteratee(node, context);
+    if (flags.break) break;
+    if (!flags.remove) {
+      cursor.moveNext();
+      if (flags.replace) {
+        node = flags.replace;
+      }
+      if (!flags.skip) {
+        var children = getChildren(node);
+        if (isNotEmpty(children)) {
+          queue.enqueueMultiple(children);
+          cursor.store(node, children.length);
+        }
+      }
+    }
+    cursor.moveForward();
+  }
+}
+
+var defaultGetChildren = function defaultGetChildren(node) {
+  return node.children;
+};
+function crawl(root, iteratee, options) {
+  if (null == root) return;
+  options = options || {};
+  var order = options.order || 'pre';
+  var getChildren = options.getChildren || defaultGetChildren;
+  if ('pre' === order) {
+    dfsPre(root, iteratee, getChildren);
+  } else if ('post' === order) {
+    dfsPost(root, iteratee, getChildren);
+  } else if ('bfs' === order) {
+    bfs(root, iteratee, getChildren);
+  }
+}
+
+return crawl;
+
+})));
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 
 
@@ -1487,14 +1824,14 @@ module.exports = function findById(subKey, idKey) {
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Component = __webpack_require__(0)(
   /* script */
   __webpack_require__(2),
   /* template */
-  __webpack_require__(9),
+  __webpack_require__(10),
   /* styles */
   null,
   /* scopeId */
@@ -1507,7 +1844,7 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports) {
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
@@ -1652,7 +1989,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
 },staticRenderFns: []}
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports) {
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
@@ -1727,7 +2064,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
 },staticRenderFns: []}
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
@@ -1737,10 +2074,10 @@ var content = __webpack_require__(5);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(12)("6f92baa3", content, true, {});
+var update = __webpack_require__(13)("6f92baa3", content, true, {});
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -1759,7 +2096,7 @@ if (typeof DEBUG !== 'undefined' && DEBUG) {
   ) }
 }
 
-var listToStyles = __webpack_require__(13)
+var listToStyles = __webpack_require__(14)
 
 /*
 type StyleObject = {
@@ -1968,7 +2305,7 @@ function applyToTag (styleElement, obj) {
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports) {
 
 /**

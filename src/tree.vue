@@ -42,6 +42,7 @@
 </template>
 <script lang="js">
 import treeSearch from 'tree-search'
+import crawl from 'tree-crawl'
 import TreeItem from "./tree-item.vue";
 
 let ITEM_ID = 0;
@@ -550,6 +551,39 @@ export default {
       this.initializeData(newData)
       this.data.push(...newData)
     },
+    /**
+      Adds a new item after the last root item.
+      e, oriNode, oriItem, reorder
+    */
+    appendAfterLastRootItemFromDropEvent (event) {
+      const lastRootItem = this.data[this.data.length - 1]
+      const lastRootItemComponent = this.getChildVueComponentForItem(lastRootItem)
+      
+      this.onItemDrop(
+        event, 
+        lastRootItemComponent,
+        lastRootItem, 
+        {
+          after: true,
+          before: false
+        }
+      )
+    },
+    getChildVueComponentForItem (item) {
+      let foundComponent = null
+      crawl(
+        this,
+        (node, context) => {
+          if (node.data && node.data.id === item.id) {
+            foundComponent = node
+            context.break()
+          }
+        },
+        { getChildren: node => node.$children }
+      )
+
+      return foundComponent
+    }
   },
   created() {
     this.initializeData(this.data);
