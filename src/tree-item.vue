@@ -10,7 +10,7 @@
     @dragenter.stop.prevent="handleDragEnter($event, _self, _self.model)"
     @dragleave.stop.prevent="handleDragLeave($event, _self, _self.model)"
     @drop.stop.prevent="handleItemDrop($event, _self, _self.model)"
-    @click.stop.prevent="handleItemToggle"
+    @click.stop.prevent="handleItemToggleClick"
   >
     <div
       v-if="isWholeRow"
@@ -20,8 +20,8 @@
 &nbsp;
     </div>
     <i
-      :class="{'hidden': !this.model.opened}"
       ref="iconToggle"
+      :class="{'hidden': !this.model.opened}"
       class="tree-icon tree-ocl"
       role="presentation"
     />
@@ -46,60 +46,85 @@
         <span v-html="model[textFieldName]" />
       </slot>
     </div>
-    <ul
-      v-if="isFolder && model.opened"
-      ref="group"
-      role="group"
-      class="tree-children"
-      :style="groupStyle"
+    <div
+      class="tree-children-container"
     >
-      <li class="tree-item js-tree-position-placeholder js-tree-position-before-children" :bookmark-id="model.id"></li>
-      <template v-for="(child, index) in model[childrenFieldName]">
-        <tree-item
-          :key="index"
-          :data="child"
-          :text-field-name="textFieldName"
-          :value-field-name="valueFieldName"
-          :children-field-name="childrenFieldName"
-          :item-events="itemEvents"
-          :whole-row="wholeRow"
-          :show-checkbox="showCheckbox"
-          :allow-transition="allowTransition"
-          :height="height"
-          :parent-item="model[childrenFieldName]"
-          :draggable="draggable"
-          :drag-over-background-color="dragOverBackgroundColor"
-          :on-item-click="onItemClick"
-          :on-item-toggle="onItemToggle"
-          :on-item-drag-start="onItemDragStart"
-          :on-item-drag-end="onItemDragEnd"
-          :on-item-drop="onItemDrop"
-          :klass="index === model[childrenFieldName].length-1?'tree-last':''"
-          :parent-tree-node="node"
-          :on-drag-over-open-folder-timeout="onDragOverOpenFolderTimeout"
-        >
-          <template slot-scope="_">
-            <slot
-              :vm="_.vm"
-              :model="_.model"
-            >
-              <i
-                v-if="!model.loading"
-                :class="_.vm.themeIconClasses"
-                role="presentation"
-              />
-              <span v-html="_.model[textFieldName]" />
-            </slot>
-          </template>
-        </tree-item>
-        <li class="tree-item js-tree-position-placeholder js-tree-position-after" :bookmark-id="child.id"></li>
-      </template>
-    </ul>
+      <ul
+        v-if="isFolder && model.opened"
+        ref="group"
+        role="group"
+        class="tree-children"
+        :style="groupStyle"
+      >
+        <li
+          class="tree-item js-tree-position-placeholder js-tree-position-before-children"
+          :bookmark-id="model.id"
+        />
+        <template v-for="(child, index) in itemsToShow">
+          <tree-item
+            :key="index"
+            :data="child"
+            :text-field-name="textFieldName"
+            :value-field-name="valueFieldName"
+            :children-field-name="childrenFieldName"
+            :item-events="itemEvents"
+            :whole-row="wholeRow"
+            :show-checkbox="showCheckbox"
+            :allow-transition="allowTransition"
+            :height="height"
+            :parent-item="model[childrenFieldName]"
+            :draggable="draggable"
+            :drag-over-background-color="dragOverBackgroundColor"
+            :on-item-click="onItemClick"
+            :on-item-toggle="onItemToggle"
+            :on-item-drag-start="onItemDragStart"
+            :on-item-drag-end="onItemDragEnd"
+            :on-item-drop="onItemDrop"
+            :klass="index === model[childrenFieldName].length-1?'tree-last':''"
+            :parent-tree-node="node"
+            :on-drag-over-open-folder-timeout="onDragOverOpenFolderTimeout"
+          >
+            <template slot-scope="_">
+              <slot
+                :vm="_.vm"
+                :model="_.model"
+              >
+                <i
+                  v-if="!model.loading"
+                  :class="_.vm.themeIconClasses"
+                  role="presentation"
+                />
+                <span v-html="_.model[textFieldName]" />
+              </slot>
+            </template>
+          </tree-item>
+          <li
+            class="tree-item js-tree-position-placeholder js-tree-position-after"
+            :bookmark-id="child.id"
+          />
+        </template>
+      </ul>
+      <LoadMore
+        v-if="model.opened && hasMoreItemsToShow"
+        @click="showMore"
+      />
+      <ReachedEnd
+        v-if="model.opened && !hasMoreItemsToShow"
+        :folder-name="model[textFieldName]"
+      />
+    </div>
   </li>
 </template>
 <script lang="js">
+import LoadMore from './load-more.vue'
+import ReachedEnd from './reached-end.vue'
+
   export default {
       name: 'TreeItem',
+      components: {
+        LoadMore,
+        ReachedEnd
+      },
       props: {
           parentTreeNode: { 
             validator: prop => typeof prop === 'object' || prop === null, 
@@ -139,21 +164,23 @@
           klass: String
       },
       data () {
-          return {
-              isTreeNode: true,
-              node: this,
-              isHover: false,
-              isDragEnter: false,
-              isBeingDragged: false,
-              dragOverCount: 0,
-              isDraggingOverUpwards: false,
-              isDraggingOverDownwards: false,
-              dragPositionInTarget: {},
-              isDragOverFolderOpenScheduled: false,
-              model: this.data,
-              maxHeight: 0,
-              events: {}
-          }
+        return {
+          isTreeNode: true,
+          node: this,
+          isHover: false,
+          isDragEnter: false,
+          isBeingDragged: false,
+          dragOverCount: 0,
+          isDraggingOverUpwards: false,
+          isDraggingOverDownwards: false,
+          dragPositionInTarget: {},
+          isDragOverFolderOpenScheduled: false,
+          model: this.data,
+          maxHeight: 0,
+          events: {},
+          itemsToShowPerPage: 50,
+          itemsToShowPage: 1
+        }
       },
       computed: {
           isFolder () {
@@ -210,13 +237,19 @@
               return {
                   'position': this.model.opened ? '' : 'relative',
                   'max-height': !!this.allowTransition ? this.maxHeight + 'px' : '',
-                  'transition-duration': !!this.allowTransition ? Math.ceil(this.model[this.childrenFieldName].length / 100) * 300 + 'ms' : '',
+                  'transition-duration': !!this.allowTransition ? Math.ceil(this.itemsToShow.length / 100) * 300 + 'ms' : '',
                   'transition-property': !!this.allowTransition ? 'max-height' : '',
                   'display': !!this.allowTransition ? 'block' : (this.model.opened ? 'block' : 'none')
               }
           },
           shouldShowBackgroundColor () {
             return !!this.dragPositionInTarget.verticalCenter
+          },
+          itemsToShow () {
+            return this.model[this.childrenFieldName].slice(0, this.itemsToShowPage * this.itemsToShowPerPage)
+          },
+          hasMoreItemsToShow () {
+            return this.itemsToShowPage * this.itemsToShowPerPage < this.model[this.childrenFieldName].length
           }
       },
       watch: {
@@ -287,6 +320,9 @@
           })
       },
       methods: {
+          showMore () {
+            this.itemsToShowPage++
+          },
           handleDragStart($event, self, model) {
             this.isBeingDragged = true
             this.onItemDragStart($event, self, model)
@@ -478,13 +514,35 @@
               placeholder.style.background = "transparent"
             }
           },
-          handleItemToggle (e) {
+          handleItemToggle () {
               if (this.isFolder) {
                   this.model.opened = !this.model.opened
                   this.onItemToggle(this, this.model)
+                  if (!this.model.opened) {
+                    this.itemsToShowPage = 1
+                  }
               }
           },
+          handleItemToggleClick (event) {
+            console.log(this.$el)
+            const childrenList = this.$el.querySelector('.tree-children-container')
+            let clickIsInsideChildrenList = false
+            if (childrenList) {
+              const childrenListRect = childrenList.getBoundingClientRect()
+              const insideRectX = event.clientX >= childrenListRect.left && event.clientX <= childrenListRect.right
+              const insideRectY = event.clientY >= childrenListRect.top  && event.clientY <= childrenListRect.bottom
+              clickIsInsideChildrenList = insideRectX && insideRectY
+            }
+
+            // If we have clicked on the list element for this tree item but
+            // not inside it's children.
+            if (!childrenList || !clickIsInsideChildrenList) {
+              this.handleItemToggle()
+            }
+          },
           handleGroupMaxHeight () {
+            // console.log('handleGroupMaxHeight called for ', this.data.title)
+            // console.log(this.$el.offsetHeight, this.$el)
               if (!!this.allowTransition) {
                   let length = 0
                   let childrenHeight = 0

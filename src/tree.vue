@@ -1,11 +1,21 @@
 <template>
-  <div :class="classes" role="tree" onselectstart="return false">
-    <ul :class="containerClasses" role="group">
-      <li class="tree-item js-tree-position-placeholder js-tree-position-before-children" :bookmark-id="data.id"></li>
-      <template v-for="(child, index) in data">
+  <div
+    :class="classes"
+    role="tree"
+    onselectstart="return false"
+  >
+    <ul
+      :class="containerClasses"
+      role="group"
+    >
+      <li
+        class="tree-item js-tree-position-placeholder js-tree-position-before-children"
+        :bookmark-id="data.id"
+      />
+      <template v-for="(child, index) in itemsToShow">
         <tree-item
-          class="tree-item tree-item-toplevel"
           :key="index"
+          class="tree-item tree-item-toplevel"
           :data="child"
           :text-field-name="textFieldName"
           :value-field-name="valueFieldName"
@@ -29,21 +39,36 @@
           :parent-tree-node="null"
         >
           <template slot-scope="_">
-            <slot :vm="_.vm" :model="_.model">
-              <i :class="_.vm.themeIconClasses" role="presentation" v-if="!_.model.loading"></i>
-              <span v-html="_.model[textFieldName]"></span>
+            <slot
+              :vm="_.vm"
+              :model="_.model"
+            >
+              <i
+                v-if="!_.model.loading"
+                :class="_.vm.themeIconClasses"
+                role="presentation"
+              />
+              <span v-html="_.model[textFieldName]" />
             </slot>
           </template>
         </tree-item>
-        <li class="tree-item js-tree-position-placeholder js-tree-position-after" :bookmark-id="child.id"></li>
+        <li
+          class="tree-item js-tree-position-placeholder js-tree-position-after"
+          :bookmark-id="child.id"
+        />
       </template>
     </ul>
+    <LoadMore
+      v-if="hasMoreItemsToShow"
+      @click="showMore"
+    />
   </div>
 </template>
 <script lang="js">
 import treeSearch from 'tree-search'
 import crawl from 'tree-crawl'
 import TreeItem from "./tree-item.vue";
+import LoadMore from './load-more.vue'
 
 let ITEM_ID = 0;
 let ITEM_HEIGHT_SMALL = 18;
@@ -52,6 +77,10 @@ let ITEM_HEIGHT_LARGE = 32;
 
 export default {
   name: "VJstree",
+  components: {
+    TreeItem,
+    LoadMore
+  },
   props: {
     data: { type: Array },
     size: {
@@ -84,7 +113,9 @@ export default {
   data() {
     return {
       draggedItem: undefined,
-      draggedElm: undefined
+      draggedElm: undefined,
+      itemsToShowPerPage: 50,
+      itemsToShowPage: 1
     };
   },
   computed: {
@@ -114,9 +145,35 @@ export default {
         default:
           return ITEM_HEIGHT_DEFAULT;
       }
+    },
+    itemsToShow () {
+      console.log('itemsToShow')
+      console.log(this.data)
+      console.log(this.data.slice(0, this.itemsToShowPage * this.itemsToShowPerPage))
+      return this.data.slice(0, this.itemsToShowPage * this.itemsToShowPerPage)
+    },
+    hasMoreItemsToShow () {
+      return this.itemsToShowPage * this.itemsToShowPerPage < this.data.length
+    }
+  },
+  watch: {
+    data: function (val) {
+      this.initializeData(val)
+    }
+  },
+  created() {
+    this.initializeData(this.data);
+  },
+  mounted() {
+    if (this.async) {
+      this.$set(this.data, 0, this.initializeLoading());
+      this.handleAsyncLoad(this.data, this);
     }
   },
   methods: {
+    showMore () {
+      this.itemsToShowPage++
+    },
     findTreeItem (id) {
       const find = treeSearch(this.childrenFieldName)
       return find(this.data, 'id', id)
@@ -584,23 +641,6 @@ export default {
 
       return foundComponent
     }
-  },
-  created() {
-    this.initializeData(this.data);
-  },
-  mounted() {
-    if (this.async) {
-      this.$set(this.data, 0, this.initializeLoading());
-      this.handleAsyncLoad(this.data, this);
-    }
-  },
-  watch: {
-    data: function (val) {
-      this.initializeData(val)
-    }
-  },
-  components: {
-    TreeItem
   }
 };
 </script>
