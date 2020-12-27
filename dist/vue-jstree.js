@@ -641,7 +641,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       model: this.data,
       maxHeight: 0,
       events: {},
-      itemsToShowPerPage: 50,
+      itemsToShowPerPage: 30,
       itemsToShowPage: 1
     };
   },
@@ -697,10 +697,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   watch: {
     dragPositionInTarget: function dragPositionInTarget(newValue) {
       if (newValue.verticalCenter && this.model.type === 'folder') {
-        this.$refs.iconToggle.style.backgroundColor = "lightgrey";
         this.$el.style.backgroundColor = this.dragOverBackgroundColor;
       } else {
-        this.$refs.iconToggle.style.backgroundColor = "inherit";
         this.$el.style.backgroundColor = "inherit";
       }
 
@@ -1146,7 +1144,7 @@ var ITEM_HEIGHT_LARGE = 32;
     return {
       draggedItem: undefined,
       draggedElm: undefined,
-      itemsToShowPerPage: 50,
+      itemsToShowPerPage: 30,
       itemsToShowPage: 1
     };
   },
@@ -2535,7 +2533,7 @@ var content = __webpack_require__(10);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(2)("7a0e3e20", content, true, {});
+var update = __webpack_require__(2)("1adad39a", content, true, {});
 
 /***/ }),
 /* 22 */
@@ -2548,7 +2546,7 @@ var content = __webpack_require__(11);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(2)("6f92baa3", content, true, {});
+var update = __webpack_require__(2)("134662b0", content, true, {});
 
 /***/ }),
 /* 23 */
@@ -2561,7 +2559,7 @@ var content = __webpack_require__(12);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(2)("4c4baae1", content, true, {});
+var update = __webpack_require__(2)("95cb6b98", content, true, {});
 
 /***/ }),
 /* 24 */

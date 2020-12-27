@@ -178,7 +178,7 @@ import ReachedEnd from './reached-end.vue'
           model: this.data,
           maxHeight: 0,
           events: {},
-          itemsToShowPerPage: 50,
+          itemsToShowPerPage: 30,
           itemsToShowPage: 1
         }
       },
@@ -255,10 +255,8 @@ import ReachedEnd from './reached-end.vue'
       watch: {
           dragPositionInTarget (newValue) {
             if (newValue.verticalCenter && this.model.type === 'folder') {
-              this.$refs.iconToggle.style.backgroundColor = "lightgrey"
               this.$el.style.backgroundColor = this.dragOverBackgroundColor
             } else {
-              this.$refs.iconToggle.style.backgroundColor = "inherit"
               this.$el.style.backgroundColor = "inherit"
             }
 

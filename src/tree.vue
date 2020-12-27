@@ -114,7 +114,7 @@ export default {
     return {
       draggedItem: undefined,
       draggedElm: undefined,
-      itemsToShowPerPage: 50,
+      itemsToShowPerPage: 30,
       itemsToShowPage: 1
     };
   },
