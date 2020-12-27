@@ -714,11 +714,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible');
       }
 
-      if (newValue.mouseTreePosition.fromTop > 0 && newValue.mouseWindowPosition.fromTop < 50) {
-        window.scrollBy({ top: -50, left: 0, behavior: 'smooth' });
-      } else if (newValue.mouseTreePosition.fromBottom > 0 && newValue.mouseWindowPosition.fromBottom < 50) {
-        window.scrollBy({ top: 50, left: 0, behavior: 'smooth' });
-      }
+      // if (newValue.mouseTreePosition.fromTop > 0 && newValue.mouseTreePosition.fromTop < 1000) {
+      //   console.log('< 1000')
+      //   window.scrollBy({ top: -50, left: 0, behavior: 'smooth' })
+      // } else if (newValue.mouseTreePosition.fromBottom > 0 && newValue.mouseTreePosition.fromBottom < 200) {
+      //   window.scrollBy({ top: 50, left: 0, behavior: 'smooth' })
+      // }
     },
     data: function data(newValue) {
       this.model = newValue;
