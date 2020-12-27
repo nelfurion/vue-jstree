@@ -3,6 +3,7 @@
     :class="classes"
     role="tree"
     onselectstart="return false"
+    @dragleave.self.prevent.stop="onDragLeaveTree($event)"
   >
     <ul
       :class="containerClasses"
@@ -11,9 +12,12 @@
       <li
         class="tree-item js-tree-position-placeholder js-tree-position-before-children"
         :bookmark-id="data.id"
+        @dragover="() => {}"
+        @drop.stop.prevent="$refs[`child-0`][0].handleItemDropOnPositionPlaceHolder($event, $refs[`child-0`][0], itemsToShow[0], true, false)"
       />
       <template v-for="(child, index) in itemsToShow">
         <tree-item
+          :ref="`child-${index}`"
           :key="index"
           class="tree-item tree-item-toplevel"
           :data="child"
@@ -53,8 +57,11 @@
           </template>
         </tree-item>
         <li
+          :key="`child-${index}-position-after`"
           class="tree-item js-tree-position-placeholder js-tree-position-after"
           :bookmark-id="child.id"
+          @dragover="() => {}"
+          @drop.stop.prevent="$refs[`child-${index}`][0].handleItemDropOnPositionPlaceHolder($event, $refs[`child-${index}`][0], child, false, true)"
         />
       </template>
     </ul>
@@ -287,6 +294,13 @@ export default {
           }
         }
       }
+    },
+    onDragLeaveTree(event) {
+      Array.from(this.$el.querySelectorAll('.js-tree-position-placeholder'))
+        .forEach(placeholder => {
+          placeholder.style.height = '0px'
+          placeholder.classList.remove('js-tree-position-placeholder__visible')
+        });
     },
     onItemClick(oriNode, oriItem, e) {
       if (this.multiple) {

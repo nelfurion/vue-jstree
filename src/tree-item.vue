@@ -59,9 +59,12 @@
         <li
           class="tree-item js-tree-position-placeholder js-tree-position-before-children"
           :bookmark-id="model.id"
+          @dragover="() => {}"
+          @drop.stop.prevent="handleItemDropOnPositionPlaceHolder($event, $refs[`child-0`][0], itemsToShow[0], true, false)"
         />
         <template v-for="(child, index) in itemsToShow">
           <tree-item
+            :ref="`child-${index}`"
             :key="index"
             :data="child"
             :text-field-name="textFieldName"
@@ -99,8 +102,11 @@
             </template>
           </tree-item>
           <li
+            :key="`child-${index}-position-after`"
             class="tree-item js-tree-position-placeholder js-tree-position-after"
             :bookmark-id="child.id"
+            @dragover="() => {}"
+            @drop.stop.prevent="handleItemDropOnPositionPlaceHolder($event, $refs[`child-${index}`][0], child, false, true)"
           />
         </template>
       </ul>
@@ -128,7 +134,7 @@ import ReachedEnd from './reached-end.vue'
       props: {
           parentTreeNode: { 
             validator: prop => typeof prop === 'object' || prop === null, 
-            required: true 
+            required: true
           },
           data: {type: Object, required: true},
           textFieldName: {type: String},
@@ -261,15 +267,15 @@ import ReachedEnd from './reached-end.vue'
             }
 
             if (newValue.top) {
-                this.$el.previousElementSibling.style.background = "black"
-                this.$el.previousElementSibling.style.backgroundColor = "black"
-                this.$el.nextElementSibling.style.background = "transparent"
+              this.$el.previousElementSibling.style.height = `${this.height}px`
+              this.$el.nextElementSibling.style.height = `0px`
+                this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible')
+                this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible')
               } else if (newValue.bottom) {
-                this.$el.previousElementSibling.style.background = "transparent"
-                this.$el.nextElementSibling.style.background = "black"
-              } else {
-                this.$el.previousElementSibling.style.background = "transparent"
-                this.$el.nextElementSibling.style.background = "transparent"
+                this.$el.previousElementSibling.style.height = `0px`
+                this.$el.nextElementSibling.style.height = `${this.height}px`
+                this.$el.previousElementSibling.classList.remove('js-tree-position-placeholder__visible')
+                this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible')
               }
 
             if (newValue.mouseTreePosition.fromTop > 0 && newValue.mouseWindowPosition.fromTop < 50) {
@@ -490,6 +496,23 @@ import ReachedEnd from './reached-end.vue'
 
             this.onItemDrop(e, oriNode, oriItem, reorder)
           },
+          handleItemDropOnPositionPlaceHolder (e, oriNode, oriItem, isBefore, isAfter) {
+            this.$el.style.backgroundColor = "inherit"
+            // dragOverCount is outside of resetDragOverState, because
+            // we want to reset everything else on drag leave, but not the
+            // dragOverCount, as lets us know if we should open a folder or not.
+            // The dragLeave event is fired for all child dom elements of each 
+            // node.
+            this.dragOverCount = 0
+            this.resetDragOverStateBubble()
+
+            const reorder = {
+              before: isBefore,
+              after: isAfter,
+            }
+
+            this.onItemDrop(e, oriNode, oriItem, reorder)
+          },
           resetDragOverState (node) {
             node.isDragOverFolderOpenScheduled = false
             node.isCloseFolderScheduled = false
@@ -509,7 +532,8 @@ import ReachedEnd from './reached-end.vue'
               document.querySelectorAll('.js-tree-position-placeholder')
 
             for (const placeholder of positionPlaceholders) {
-              placeholder.style.background = "transparent"
+              placeholder.style.height = "0px"
+              placeholder.classList.remove('js-tree-position-placeholder__visible')
             }
           },
           handleItemToggle () {
@@ -522,7 +546,6 @@ import ReachedEnd from './reached-end.vue'
               }
           },
           handleItemToggleClick (event) {
-            console.log(this.$el)
             const childrenList = this.$el.querySelector('.tree-children-container')
             let clickIsInsideChildrenList = false
             if (childrenList) {
@@ -539,8 +562,6 @@ import ReachedEnd from './reached-end.vue'
             }
           },
           handleGroupMaxHeight () {
-            // console.log('handleGroupMaxHeight called for ', this.data.title)
-            // console.log(this.$el.offsetHeight, this.$el)
               if (!!this.allowTransition) {
                   let length = 0
                   let childrenHeight = 0

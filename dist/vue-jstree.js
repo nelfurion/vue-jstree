@@ -703,15 +703,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
 
       if (newValue.top) {
-        this.$el.previousElementSibling.style.background = "black";
-        this.$el.previousElementSibling.style.backgroundColor = "black";
-        this.$el.nextElementSibling.style.background = "transparent";
+        this.$el.previousElementSibling.style.height = this.height + 'px';
+        this.$el.nextElementSibling.style.height = '0px';
+        this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible');
+        this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible');
       } else if (newValue.bottom) {
-        this.$el.previousElementSibling.style.background = "transparent";
-        this.$el.nextElementSibling.style.background = "black";
-      } else {
-        this.$el.previousElementSibling.style.background = "transparent";
-        this.$el.nextElementSibling.style.background = "transparent";
+        this.$el.previousElementSibling.style.height = '0px';
+        this.$el.nextElementSibling.style.height = this.height + 'px';
+        this.$el.previousElementSibling.classList.remove('js-tree-position-placeholder__visible');
+        this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible');
       }
 
       if (newValue.mouseTreePosition.fromTop > 0 && newValue.mouseWindowPosition.fromTop < 50) {
@@ -943,6 +943,23 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
       this.onItemDrop(e, oriNode, oriItem, reorder);
     },
+    handleItemDropOnPositionPlaceHolder: function handleItemDropOnPositionPlaceHolder(e, oriNode, oriItem, isBefore, isAfter) {
+      this.$el.style.backgroundColor = "inherit";
+      // dragOverCount is outside of resetDragOverState, because
+      // we want to reset everything else on drag leave, but not the
+      // dragOverCount, as lets us know if we should open a folder or not.
+      // The dragLeave event is fired for all child dom elements of each 
+      // node.
+      this.dragOverCount = 0;
+      this.resetDragOverStateBubble();
+
+      var reorder = {
+        before: isBefore,
+        after: isAfter
+      };
+
+      this.onItemDrop(e, oriNode, oriItem, reorder);
+    },
     resetDragOverState: function resetDragOverState(node) {
       node.isDragOverFolderOpenScheduled = false;
       node.isCloseFolderScheduled = false;
@@ -968,7 +985,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         for (var _iterator = positionPlaceholders[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var placeholder = _step.value;
 
-          placeholder.style.background = "transparent";
+          placeholder.style.height = "0px";
+          placeholder.classList.remove('js-tree-position-placeholder__visible');
         }
       } catch (err) {
         _didIteratorError = true;
@@ -995,7 +1013,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     handleItemToggleClick: function handleItemToggleClick(event) {
-      console.log(this.$el);
       var childrenList = this.$el.querySelector('.tree-children-container');
       var clickIsInsideChildrenList = false;
       if (childrenList) {
@@ -1012,8 +1029,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     },
     handleGroupMaxHeight: function handleGroupMaxHeight() {
-      // console.log('handleGroupMaxHeight called for ', this.data.title)
-      // console.log(this.$el.offsetHeight, this.$el)
       if (!!this.allowTransition) {
         var length = 0;
         var childrenHeight = 0;
@@ -1334,6 +1349,12 @@ var ITEM_HEIGHT_LARGE = 32;
           }
         }
       }
+    },
+    onDragLeaveTree: function onDragLeaveTree(event) {
+      Array.from(this.$el.querySelectorAll('.js-tree-position-placeholder')).forEach(function (placeholder) {
+        placeholder.style.height = '0px';
+        placeholder.classList.remove('js-tree-position-placeholder__visible');
+      });
     },
     onItemClick: function onItemClick(oriNode, oriItem, e) {
       if (this.multiple) {
@@ -2364,10 +2385,20 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     staticClass: "tree-item js-tree-position-placeholder js-tree-position-before-children",
     attrs: {
       "bookmark-id": _vm.model.id
+    },
+    on: {
+      "dragover": function () {},
+      "drop": function($event) {
+        $event.stopPropagation();
+        $event.preventDefault();
+        return _vm.handleItemDropOnPositionPlaceHolder($event, _vm.$refs["child-0"][0], _vm.itemsToShow[0], true, false)
+      }
     }
   }), _vm._v(" "), _vm._l((_vm.itemsToShow), function(child, index) {
     return [_c('tree-item', {
       key: index,
+      ref: ("child-" + index),
+      refInFor: true,
       attrs: {
         "data": child,
         "text-field-name": _vm.textFieldName,
@@ -2409,9 +2440,18 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         }
       }], null, true)
     }), _vm._v(" "), _c('li', {
+      key: ("child-" + index + "-position-after"),
       staticClass: "tree-item js-tree-position-placeholder js-tree-position-after",
       attrs: {
         "bookmark-id": child.id
+      },
+      on: {
+        "dragover": function () {},
+        "drop": function($event) {
+          $event.stopPropagation();
+          $event.preventDefault();
+          return _vm.handleItemDropOnPositionPlaceHolder($event, _vm.$refs[("child-" + index)][0], child, false, true)
+        }
       }
     })]
   })], 2) : _vm._e(), _vm._v(" "), (_vm.model.opened && _vm.hasMoreItemsToShow) ? _c('LoadMore', {
@@ -2435,6 +2475,14 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     attrs: {
       "role": "tree",
       "onselectstart": "return false"
+    },
+    on: {
+      "dragleave": function($event) {
+        if ($event.target !== $event.currentTarget) { return null; }
+        $event.preventDefault();
+        $event.stopPropagation();
+        return _vm.onDragLeaveTree($event)
+      }
     }
   }, [_c('ul', {
     class: _vm.containerClasses,
@@ -2445,10 +2493,20 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     staticClass: "tree-item js-tree-position-placeholder js-tree-position-before-children",
     attrs: {
       "bookmark-id": _vm.data.id
+    },
+    on: {
+      "dragover": function () {},
+      "drop": function($event) {
+        $event.stopPropagation();
+        $event.preventDefault();
+        _vm.$refs["child-0"][0].handleItemDropOnPositionPlaceHolder($event, _vm.$refs["child-0"][0], _vm.itemsToShow[0], true, false)
+      }
     }
   }), _vm._v(" "), _vm._l((_vm.itemsToShow), function(child, index) {
     return [_c('tree-item', {
       key: index,
+      ref: ("child-" + index),
+      refInFor: true,
       staticClass: "tree-item tree-item-toplevel",
       attrs: {
         "data": child,
@@ -2492,9 +2550,18 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         }
       }], null, true)
     }), _vm._v(" "), _c('li', {
+      key: ("child-" + index + "-position-after"),
       staticClass: "tree-item js-tree-position-placeholder js-tree-position-after",
       attrs: {
         "bookmark-id": child.id
+      },
+      on: {
+        "dragover": function () {},
+        "drop": function($event) {
+          $event.stopPropagation();
+          $event.preventDefault();
+          _vm.$refs[("child-" + index)][0].handleItemDropOnPositionPlaceHolder($event, _vm.$refs[("child-" + index)][0], child, false, true)
+        }
       }
     })]
   })], 2), _vm._v(" "), (_vm.hasMoreItemsToShow) ? _c('LoadMore', {
