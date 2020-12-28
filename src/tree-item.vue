@@ -264,6 +264,12 @@ import ReachedEnd from './reached-end.vue'
       },
       watch: {
           dragPositionInTarget (newValue) {
+            // If dragging inside a folder - hide the position just below the 
+            // folder.
+            if (this.model.opened) {
+              this.hideBelowPlaceholder()
+            }
+
             if (this.allowsDrop) {
               if (newValue.verticalCenter && this.model.type === 'folder') {
                 this.$el.style.backgroundColor = this.dragOverBackgroundColor
@@ -272,15 +278,18 @@ import ReachedEnd from './reached-end.vue'
               }
 
               if (newValue.top) {
-                this.$el.previousElementSibling.style.height = `${this.height}px`
-                this.$el.nextElementSibling.style.height = `0px`
-                this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible')
-                this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible')
+                this.showAbovePlaceholder()
+                this.hideBelowPlaceholder()
+
+                this.hideChildrenPositionPlaceholders({ target: this.$el })
               } else if (newValue.bottom) {
-                this.$el.previousElementSibling.style.height = `0px`
-                this.$el.nextElementSibling.style.height = `${this.height}px`
-                this.$el.previousElementSibling.classList.remove('js-tree-position-placeholder__visible')
-                this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible')
+                this.hideAbovePlaceholder()
+
+                // Show the position below the current item, unless the current
+                // item is an opened folder.
+                if (!this.model.opened) {
+                  this.showBelowPlaceholder()
+                }
               }
             }
 
@@ -331,6 +340,22 @@ import ReachedEnd from './reached-end.vue'
           })
       },
       methods: {
+          showAbovePlaceholder () {
+            this.$el.previousElementSibling.style.height = `${this.height}px`
+            this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible')
+          },
+          showBelowPlaceholder () {
+            this.$el.nextElementSibling.style.height = `${this.height}px`
+            this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible')
+          },
+          hideBelowPlaceholder () {
+            this.$el.nextElementSibling.style.height = `0px`
+            this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible')
+          },
+          hideAbovePlaceholder () {
+            this.$el.previousElementSibling.style.height = `0px`
+            this.$el.previousElementSibling.classList.remove('js-tree-position-placeholder__visible')
+          },
           showMore () {
             this.itemsToShowPage++
           },
@@ -352,6 +377,8 @@ import ReachedEnd from './reached-end.vue'
             this.dragOverCount += 1
           },
           handleDragLeave ($event, self, model) {
+            this.hideChildrenPositionPlaceholders($event)
+
             this.getDragoverPosition($event)
             if (!this.dragPositionInTarget.inside) {
               this.isDragEnter = false
@@ -570,6 +597,17 @@ import ReachedEnd from './reached-end.vue'
             // not inside it's children.
             if (!childrenList || !clickIsInsideChildrenList) {
               this.handleItemToggle()
+            }
+          },
+          hideChildrenPositionPlaceholders ($event) {
+            // If we are dragleaving the whole tree node
+            if ($event.target.isSameNode(this.$el) && this.model.opened) {
+              const childrenList = this.$el.querySelector('.tree-children')
+              const childrenPositionPlaceholders = Array.from(childrenList.querySelectorAll('.js-tree-position-placeholder'))
+              childrenPositionPlaceholders.forEach(placeholder => {
+                placeholder.style.height = `0px`
+                placeholder.classList.remove('js-tree-position-placeholder__visible')
+              })
             }
           },
           handleGroupMaxHeight () {
