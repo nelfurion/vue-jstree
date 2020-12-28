@@ -183,16 +183,24 @@ export default {
       return find(this.data, 'id', id)
     },
     initializeData(items, parent) {
-      return Item.initializeData(items, parent, this.childrenFieldName)
+      return Item.initializeData(
+        items, 
+        parent, 
+        this.textFieldName,
+        this.valueFieldName,
+        this.childrenFieldName,
+        this.collapse
+      )
     },
     initializeDataItem(item, parentId) {
+      
       return Item.initializeDataItem(
         item, 
         parentId, 
         this.textFieldName,
         this.valueFieldName,
         this.childrenFieldName,
-        this.collapse,
+        this.collapse
       )
     },
     initializeLoading() {

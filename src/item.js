@@ -1,19 +1,19 @@
 let ITEM_ID = 0;
 
 export const Item = {
-  initializeData(items, parent, childrenFieldName) {
+  initializeData(items, parent, textFieldName, valueFieldName, childrenFieldName, collapse) {
     parent = parent || { id: 'root' }
     if (items && items.length > 0) {
       for (let i in items) {
-        var dataItem = this.initializeDataItem(items[i], parent.id);
+        var dataItem = this.initializeDataItem(items[i], parent.id, textFieldName, valueFieldName, childrenFieldName, collapse);
         items[i] = dataItem;
-        this.initializeData(items[i][childrenFieldName], items[i]);
+        this.initializeData(items[i][childrenFieldName], items[i], textFieldName, valueFieldName, childrenFieldName, collapse);
       }
     }
   },
   initializeDataItem(
-    item, 
-    parentId, 
+    item,
+    parentId,
     textFieldName,
     valueFieldName,
     childrenFieldName,
@@ -53,20 +53,20 @@ export const Item = {
 
     let self = this;
     node.addBefore = function (data, selectedNode) {
-      let newItem = self.initializeDataItem(data, node.parentId)
+      let newItem = self.initializeDataItem(data, node.parentId, textFieldName, valueFieldName, childrenFieldName, collapse)
       let index = selectedNode.parentItem.findIndex(t => t.id === node.id)
       selectedNode.parentItem.splice(index, 0, newItem)
       return newItem
     };
     node.addAfter = function (data, selectedNode) {
-      let newItem = self.initializeDataItem(data, node.parentId)
+      let newItem = self.initializeDataItem(data, node.parentId, textFieldName, valueFieldName, childrenFieldName, collapse)
       let index = selectedNode.parentItem.findIndex(t => t.id === node.id) + 1
       selectedNode.parentItem.splice(index, 0, newItem)
       return newItem
     };
     node.addChild = function (data) {
       node[childrenFieldName] = node[childrenFieldName] || []
-      let newItem = self.initializeDataItem(data, node.id);
+      let newItem = self.initializeDataItem(data, node.id, textFieldName, valueFieldName, childrenFieldName, collapse);
       node.opened = true;
       node[childrenFieldName].unshift(newItem);
       return newItem
@@ -84,7 +84,7 @@ export const Item = {
     node.closeChildren = function () {
       node.opened = false;
       self.handleRecursionNodeChildren(
-        node, 
+        node,
         childrenFieldName,
         node => {
           node.opened = false;
