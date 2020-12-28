@@ -76,8 +76,8 @@ import treeSearch from 'tree-search'
 import crawl from 'tree-crawl'
 import TreeItem from "./tree-item.vue";
 import LoadMore from './load-more.vue'
+import { Item } from './item.js'
 
-let ITEM_ID = 0;
 let ITEM_HEIGHT_SMALL = 18;
 let ITEM_HEIGHT_DEFAULT = 24;
 let ITEM_HEIGHT_LARGE = 32;
@@ -183,84 +183,17 @@ export default {
       return find(this.data, 'id', id)
     },
     initializeData(items, parent) {
-      parent = parent || { id: 'root' }
-      if (items && items.length > 0) {
-        for (let i in items) {
-          var dataItem = this.initializeDataItem(items[i], parent.id);
-          items[i] = dataItem;
-          this.initializeData(items[i][this.childrenFieldName], items[i]);
-        }
-      }
+      return Item.initializeData(items, parent, this.childrenFieldName)
     },
     initializeDataItem(item, parentId) {
-      function Model(
-        item,
-        textFieldName,
-        valueFieldName,
-        childrenFieldName,
-        collapse
-      ) {
-        this.id = item.id || ITEM_ID++;
-        this[textFieldName] = item[textFieldName] || "";
-        this[valueFieldName] = item[valueFieldName] || item[textFieldName];
-        this.icon = item.icon || "";
-        this.opened = item.opened || collapse;
-        this.selected = item.selected || false;
-        this.disabled = item.disabled || false;
-        this.loading = item.loading || false;
-        this.isFolder = item.type === 'folder';
-        this[childrenFieldName] = item[childrenFieldName] || [];
-      }
-
-      let node = Object.assign(
-        new Model(
-          item,
-          this.textFieldName,
-          this.valueFieldName,
-          this.childrenFieldName,
-          this.collapse
-        ),
-        item
-      );
-
-      node.parentId = parentId /* || item.id */ || 'root';
-
-      let self = this;
-      node.addBefore = function(data, selectedNode) {
-        let newItem = self.initializeDataItem(data, node.parentId)
-        let index = selectedNode.parentItem.findIndex(t => t.id === node.id)
-        selectedNode.parentItem.splice(index, 0, newItem)
-        self.$emit('update:add-before', node.id, newItem)
-      };
-      node.addAfter = function(data, selectedNode) {
-        let newItem = self.initializeDataItem(data, node.parentId)
-        let index = selectedNode.parentItem.findIndex(t => t.id === node.id) + 1
-        selectedNode.parentItem.splice(index, 0, newItem)
-        self.$emit('update:add-after', node.id, newItem)
-      };
-      node.addChild = function(data) {
-        node[self.childrenFieldName] = node[self.childrenFieldName] || []
-        let newItem = self.initializeDataItem(data, node.id);
-        node.opened = true;
-        node[self.childrenFieldName].unshift(newItem);
-        self.$emit('update:add-child', node.id, newItem)
-      };
-      node.openChildren = function() {
-        node.opened = true;
-        self.handleRecursionNodeChildren(node, node => {
-          node.opened = true;
-        });
-      };
-      node.closeChildren = function() {
-        node.opened = false;
-        self.handleRecursionNodeChildren(node, node => {
-          node.opened = false;
-        });
-      };
-      node.removeSelf = function() {
-
-      };
-      return node;
+      return Item.initializeDataItem(
+        item, 
+        parentId, 
+        this.textFieldName,
+        this.valueFieldName,
+        this.childrenFieldName,
+        this.collapse,
+      )
     },
     initializeLoading() {
       var item = {};
@@ -276,18 +209,6 @@ export default {
             if (!childNode.disabled) {
               this.handleRecursionNodeChilds(childNode, func);
             }
-          }
-        }
-      }
-    },
-    handleRecursionNodeChildren(node, func) {
-      if (func(node) !== false) {
-        if (
-          node[this.childrenFieldName] &&
-          node[this.childrenFieldName].length > 0
-        ) {
-          for (let childNode of node[this.childrenFieldName]) {
-            this.handleRecursionNodeChildren(childNode, func);
           }
         }
       }
@@ -551,7 +472,8 @@ export default {
             draggedItemDescription
           )
 
-          dropTargetData.addChild(draggedItemDescription.item)
+          const newItem = dropTargetData.addChild(draggedItemDescription.item)
+          this.$emit('update:add-child', dropTargetData.id, newItem)
         } else if (action === 'addBefore') {
           // remove from target's parent before adding it next to the target
           this.removeItemFromArray(
@@ -559,7 +481,8 @@ export default {
             draggedItemDescription
           )
 
-          dropTargetData.addBefore(draggedItemDescription.item, dropTargetNode)
+          const newItem = dropTargetData.addBefore(draggedItemDescription.item, dropTargetNode)
+          this.$emit('update:add-before', dropTargetData.id, newItem)
         } else if (action === 'addAfter') {
           // remove from target's parent before adding it next to the target
           this.removeItemFromArray(
@@ -567,7 +490,8 @@ export default {
             draggedItemDescription
           )
 
-          dropTargetData.addAfter(draggedItemDescription.item, dropTargetNode)
+          const newItem = dropTargetData.addAfter(draggedItemDescription.item, dropTargetNode)
+          this.$emit('update:add-after', dropTargetData.id, newItem)
         }
     },
     /**

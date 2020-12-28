@@ -73,7 +73,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "dist/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 9);
+/******/ 	return __webpack_require__(__webpack_require__.s = 10);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -249,7 +249,7 @@ if (typeof DEBUG !== 'undefined' && DEBUG) {
   ) }
 }
 
-var listToStyles = __webpack_require__(24)
+var listToStyles = __webpack_require__(25)
 
 /*
 type StyleObject = {
@@ -459,16 +459,124 @@ function applyToTag (styleElement, obj) {
 
 /***/ }),
 /* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Item; });
+var ITEM_ID = 0;
+
+var Item = {
+  initializeData: function initializeData(items, parent, childrenFieldName) {
+    parent = parent || { id: 'root' };
+    if (items && items.length > 0) {
+      for (var i in items) {
+        var dataItem = this.initializeDataItem(items[i], parent.id);
+        items[i] = dataItem;
+        this.initializeData(items[i][childrenFieldName], items[i]);
+      }
+    }
+  },
+  initializeDataItem: function initializeDataItem(item, parentId, textFieldName, valueFieldName, childrenFieldName, collapse) {
+    function Model(item, textFieldName, valueFieldName, childrenFieldName, collapse) {
+      this.id = item.id || ITEM_ID++;
+      this[textFieldName] = item[textFieldName] || "";
+      this[valueFieldName] = item[valueFieldName] || item[textFieldName];
+      this.icon = item.icon || "";
+      this.opened = item.opened || collapse;
+      this.selected = item.selected || false;
+      this.disabled = item.disabled || false;
+      this.loading = item.loading || false;
+      this.isFolder = item.type === 'folder';
+      this[childrenFieldName] = item[childrenFieldName] || [];
+    }
+
+    var node = Object.assign(new Model(item, textFieldName, valueFieldName, childrenFieldName, collapse), item);
+
+    node.parentId = parentId /* || item.id */ || 'root';
+
+    var self = this;
+    node.addBefore = function (data, selectedNode) {
+      var newItem = self.initializeDataItem(data, node.parentId);
+      var index = selectedNode.parentItem.findIndex(function (t) {
+        return t.id === node.id;
+      });
+      selectedNode.parentItem.splice(index, 0, newItem);
+      return newItem;
+    };
+    node.addAfter = function (data, selectedNode) {
+      var newItem = self.initializeDataItem(data, node.parentId);
+      var index = selectedNode.parentItem.findIndex(function (t) {
+        return t.id === node.id;
+      }) + 1;
+      selectedNode.parentItem.splice(index, 0, newItem);
+      return newItem;
+    };
+    node.addChild = function (data) {
+      node[childrenFieldName] = node[childrenFieldName] || [];
+      var newItem = self.initializeDataItem(data, node.id);
+      node.opened = true;
+      node[childrenFieldName].unshift(newItem);
+      return newItem;
+    };
+    node.openChildren = function () {
+      node.opened = true;
+      self.handleRecursionNodeChildren(node, childrenFieldName, function (node) {
+        node.opened = true;
+      });
+    };
+    node.closeChildren = function () {
+      node.opened = false;
+      self.handleRecursionNodeChildren(node, childrenFieldName, function (node) {
+        node.opened = false;
+      });
+    };
+    node.removeSelf = function () {};
+    return node;
+  },
+  handleRecursionNodeChildren: function handleRecursionNodeChildren(node, childrenFieldName, func) {
+    if (func(node) !== false) {
+      if (node[childrenFieldName] && node[childrenFieldName].length > 0) {
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = node[childrenFieldName][Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var childNode = _step.value;
+
+            this.handleRecursionNodeChildren(childNode, childrenFieldName, func);
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+              _iterator.return();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function injectStyle (ssrContext) {
-  __webpack_require__(21)
+  __webpack_require__(22)
 }
 var Component = __webpack_require__(0)(
   /* script */
-  __webpack_require__(5),
+  __webpack_require__(6),
   /* template */
-  __webpack_require__(17),
+  __webpack_require__(18),
   /* styles */
   injectStyle,
   /* scopeId */
@@ -481,17 +589,17 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function injectStyle (ssrContext) {
-  __webpack_require__(22)
+  __webpack_require__(23)
 }
 var Component = __webpack_require__(0)(
   /* script */
-  __webpack_require__(8),
+  __webpack_require__(9),
   /* template */
-  __webpack_require__(19),
+  __webpack_require__(20),
   /* styles */
   injectStyle,
   /* scopeId */
@@ -504,7 +612,7 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -526,7 +634,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 });
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -552,14 +660,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 });
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__load_more_vue__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__load_more_vue__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__load_more_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__load_more_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__reached_end_vue__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__reached_end_vue__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__reached_end_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__reached_end_vue__);
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -1088,19 +1196,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 });
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_tree_search__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_tree_search__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_tree_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_tree_search__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_tree_crawl__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_tree_crawl__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_tree_crawl___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_tree_crawl__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__tree_item_vue__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__tree_item_vue__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__tree_item_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__tree_item_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__load_more_vue__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__load_more_vue__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__load_more_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__load_more_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__item_js__ = __webpack_require__(3);
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -1114,7 +1223,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 
-var ITEM_ID = 0;
+
 var ITEM_HEIGHT_SMALL = 18;
 var ITEM_HEIGHT_DEFAULT = 24;
 var ITEM_HEIGHT_LARGE = 32;
@@ -1213,71 +1322,10 @@ var ITEM_HEIGHT_LARGE = 32;
       return find(this.data, 'id', id);
     },
     initializeData: function initializeData(items, parent) {
-      parent = parent || { id: 'root' };
-      if (items && items.length > 0) {
-        for (var i in items) {
-          var dataItem = this.initializeDataItem(items[i], parent.id);
-          items[i] = dataItem;
-          this.initializeData(items[i][this.childrenFieldName], items[i]);
-        }
-      }
+      return __WEBPACK_IMPORTED_MODULE_4__item_js__["a" /* Item */].initializeData(items, parent, this.childrenFieldName);
     },
     initializeDataItem: function initializeDataItem(item, parentId) {
-      function Model(item, textFieldName, valueFieldName, childrenFieldName, collapse) {
-        this.id = item.id || ITEM_ID++;
-        this[textFieldName] = item[textFieldName] || "";
-        this[valueFieldName] = item[valueFieldName] || item[textFieldName];
-        this.icon = item.icon || "";
-        this.opened = item.opened || collapse;
-        this.selected = item.selected || false;
-        this.disabled = item.disabled || false;
-        this.loading = item.loading || false;
-        this.isFolder = item.type === 'folder';
-        this[childrenFieldName] = item[childrenFieldName] || [];
-      }
-
-      var node = Object.assign(new Model(item, this.textFieldName, this.valueFieldName, this.childrenFieldName, this.collapse), item);
-
-      node.parentId = parentId /* || item.id */ || 'root';
-
-      var self = this;
-      node.addBefore = function (data, selectedNode) {
-        var newItem = self.initializeDataItem(data, node.parentId);
-        var index = selectedNode.parentItem.findIndex(function (t) {
-          return t.id === node.id;
-        });
-        selectedNode.parentItem.splice(index, 0, newItem);
-        self.$emit('update:add-before', node.id, newItem);
-      };
-      node.addAfter = function (data, selectedNode) {
-        var newItem = self.initializeDataItem(data, node.parentId);
-        var index = selectedNode.parentItem.findIndex(function (t) {
-          return t.id === node.id;
-        }) + 1;
-        selectedNode.parentItem.splice(index, 0, newItem);
-        self.$emit('update:add-after', node.id, newItem);
-      };
-      node.addChild = function (data) {
-        node[self.childrenFieldName] = node[self.childrenFieldName] || [];
-        var newItem = self.initializeDataItem(data, node.id);
-        node.opened = true;
-        node[self.childrenFieldName].unshift(newItem);
-        self.$emit('update:add-child', node.id, newItem);
-      };
-      node.openChildren = function () {
-        node.opened = true;
-        self.handleRecursionNodeChildren(node, function (node) {
-          node.opened = true;
-        });
-      };
-      node.closeChildren = function () {
-        node.opened = false;
-        self.handleRecursionNodeChildren(node, function (node) {
-          node.opened = false;
-        });
-      };
-      node.removeSelf = function () {};
-      return node;
+      return __WEBPACK_IMPORTED_MODULE_4__item_js__["a" /* Item */].initializeDataItem(item, parentId, this.textFieldName, this.valueFieldName, this.childrenFieldName, this.collapse);
     },
     initializeLoading: function initializeLoading() {
       var item = {};
@@ -1312,36 +1360,6 @@ var ITEM_HEIGHT_LARGE = 32;
             } finally {
               if (_didIteratorError) {
                 throw _iteratorError;
-              }
-            }
-          }
-        }
-      }
-    },
-    handleRecursionNodeChildren: function handleRecursionNodeChildren(node, func) {
-      if (func(node) !== false) {
-        if (node[this.childrenFieldName] && node[this.childrenFieldName].length > 0) {
-          var _iteratorNormalCompletion2 = true;
-          var _didIteratorError2 = false;
-          var _iteratorError2 = undefined;
-
-          try {
-            for (var _iterator2 = node[this.childrenFieldName][Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-              var childNode = _step2.value;
-
-              this.handleRecursionNodeChildren(childNode, func);
-            }
-          } catch (err) {
-            _didIteratorError2 = true;
-            _iteratorError2 = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                _iterator2.return();
-              }
-            } finally {
-              if (_didIteratorError2) {
-                throw _iteratorError2;
               }
             }
           }
@@ -1457,7 +1475,7 @@ var ITEM_HEIGHT_LARGE = 32;
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e, oriNode, oriItem, reorder) {
         var _this = this;
 
-        var dataIsUpdated, eventData, _loop, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, item, parentItem;
+        var dataIsUpdated, eventData, _loop, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, item, parentItem;
 
         return regeneratorRuntime.wrap(function _callee$(_context2) {
           while (1) {
@@ -1506,23 +1524,23 @@ var ITEM_HEIGHT_LARGE = 32;
                     }
                   }, _loop, _this);
                 });
-                _iteratorNormalCompletion3 = true;
-                _didIteratorError3 = false;
-                _iteratorError3 = undefined;
+                _iteratorNormalCompletion2 = true;
+                _didIteratorError2 = false;
+                _iteratorError2 = undefined;
                 _context2.prev = 9;
-                _iterator3 = e.dataTransfer.items[Symbol.iterator]();
+                _iterator2 = e.dataTransfer.items[Symbol.iterator]();
 
               case 11:
-                if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
+                if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
                   _context2.next = 17;
                   break;
                 }
 
-                item = _step3.value;
+                item = _step2.value;
                 return _context2.delegateYield(_loop(item), 't0', 14);
 
               case 14:
-                _iteratorNormalCompletion3 = true;
+                _iteratorNormalCompletion2 = true;
                 _context2.next = 11;
                 break;
 
@@ -1533,26 +1551,26 @@ var ITEM_HEIGHT_LARGE = 32;
               case 19:
                 _context2.prev = 19;
                 _context2.t1 = _context2['catch'](9);
-                _didIteratorError3 = true;
-                _iteratorError3 = _context2.t1;
+                _didIteratorError2 = true;
+                _iteratorError2 = _context2.t1;
 
               case 23:
                 _context2.prev = 23;
                 _context2.prev = 24;
 
-                if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                  _iterator3.return();
+                if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                  _iterator2.return();
                 }
 
               case 26:
                 _context2.prev = 26;
 
-                if (!_didIteratorError3) {
+                if (!_didIteratorError2) {
                   _context2.next = 29;
                   break;
                 }
 
-                throw _iteratorError3;
+                throw _iteratorError2;
 
               case 29:
                 return _context2.finish(26);
@@ -1700,17 +1718,20 @@ var ITEM_HEIGHT_LARGE = 32;
         // remove from the target's children before adding it there
         this.removeItemFromArray(dropTargetData[this.childrenFieldName], draggedItemDescription);
 
-        dropTargetData.addChild(draggedItemDescription.item);
+        var newItem = dropTargetData.addChild(draggedItemDescription.item);
+        this.$emit('update:add-child', dropTargetData.id, newItem);
       } else if (action === 'addBefore') {
         // remove from target's parent before adding it next to the target
         this.removeItemFromArray(dropTargetNode.parentItem, draggedItemDescription);
 
-        dropTargetData.addBefore(draggedItemDescription.item, dropTargetNode);
+        var _newItem = dropTargetData.addBefore(draggedItemDescription.item, dropTargetNode);
+        this.$emit('update:add-before', dropTargetData.id, _newItem);
       } else if (action === 'addAfter') {
         // remove from target's parent before adding it next to the target
         this.removeItemFromArray(dropTargetNode.parentItem, draggedItemDescription);
 
-        dropTargetData.addAfter(draggedItemDescription.item, dropTargetNode);
+        var _newItem2 = dropTargetData.addAfter(draggedItemDescription.item, dropTargetNode);
+        this.$emit('update:add-after', dropTargetData.id, _newItem2);
       }
     },
 
@@ -1804,13 +1825,15 @@ var ITEM_HEIGHT_LARGE = 32;
 });
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__tree_vue__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__tree_vue__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__tree_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__tree_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__item__ = __webpack_require__(3);
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Item", function() { return __WEBPACK_IMPORTED_MODULE_1__item__["a"]; });
 /**
  * Created by virus_zhh on 2017/9/29.
  */
@@ -1826,8 +1849,9 @@ if (typeof window !== 'undefined' && window.Vue) {
 
 /* harmony default export */ __webpack_exports__["default"] = (__WEBPACK_IMPORTED_MODULE_0__tree_vue___default.a);
 
+
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(1)();
@@ -1841,7 +1865,7 @@ exports.push([module.i, ".LoadMore[data-v-36014d3e]{padding-top:30px;padding-bot
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(1)();
@@ -1855,7 +1879,7 @@ exports.push([module.i, ".tree-children,.tree-container-ul,.tree-node{display:bl
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(1)();
@@ -1869,7 +1893,7 @@ exports.push([module.i, ".ReachedEnd[data-v-90e77a7c]{margin-left:30px;padding-t
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function (global, factory) {
@@ -2176,7 +2200,7 @@ return crawl;
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2230,17 +2254,17 @@ module.exports = function findById(subKey, idKey) {
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function injectStyle (ssrContext) {
-  __webpack_require__(23)
+  __webpack_require__(24)
 }
 var Component = __webpack_require__(0)(
   /* script */
-  __webpack_require__(6),
+  __webpack_require__(7),
   /* template */
-  __webpack_require__(20),
+  __webpack_require__(21),
   /* styles */
   injectStyle,
   /* scopeId */
@@ -2253,14 +2277,14 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Component = __webpack_require__(0)(
   /* script */
-  __webpack_require__(7),
+  __webpack_require__(8),
   /* template */
-  __webpack_require__(18),
+  __webpack_require__(19),
   /* styles */
   null,
   /* scopeId */
@@ -2273,7 +2297,7 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports) {
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
@@ -2290,7 +2314,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
 },staticRenderFns: []}
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports) {
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
@@ -2464,7 +2488,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
 },staticRenderFns: []}
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports) {
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
@@ -2570,7 +2594,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
 },staticRenderFns: []}
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports) {
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
@@ -2588,19 +2612,6 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
 },staticRenderFns: []}
 
 /***/ }),
-/* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(10);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(2)("1adad39a", content, true, {});
-
-/***/ }),
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2611,7 +2622,7 @@ var content = __webpack_require__(11);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(2)("134662b0", content, true, {});
+var update = __webpack_require__(2)("1adad39a", content, true, {});
 
 /***/ }),
 /* 23 */
@@ -2624,10 +2635,23 @@ var content = __webpack_require__(12);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(2)("95cb6b98", content, true, {});
+var update = __webpack_require__(2)("134662b0", content, true, {});
 
 /***/ }),
 /* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(13);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(2)("95cb6b98", content, true, {});
+
+/***/ }),
+/* 25 */
 /***/ (function(module, exports) {
 
 /**
