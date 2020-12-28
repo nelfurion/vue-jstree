@@ -30,6 +30,7 @@ export default {
     border-radius: 3px;
     background-color: #2396f2;
     color: #212529;
+    line-height: 24px;
 
     &:hover {
       background: #43a5f4;
