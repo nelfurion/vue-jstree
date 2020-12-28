@@ -154,9 +154,6 @@ export default {
       }
     },
     itemsToShow () {
-      console.log('itemsToShow')
-      console.log(this.data)
-      console.log(this.data.slice(0, this.itemsToShowPage * this.itemsToShowPerPage))
       return this.data.slice(0, this.itemsToShowPage * this.itemsToShowPerPage)
     },
     hasMoreItemsToShow () {
