@@ -10,6 +10,7 @@
       role="group"
     >
       <li
+        v-if="allowsDrop"
         class="tree-item js-tree-position-placeholder js-tree-position-before-children"
         :bookmark-id="data.id"
         @dragover="() => {}"
@@ -31,6 +32,7 @@
           :height="sizeHeight"
           :parent-item="data"
           :draggable="draggable"
+          :allows-drop="allowsDrop"
           :drag-over-background-color="dragOverBackgroundColor"
           :on-item-click="onItemClick"
           :on-item-toggle="onItemToggle"
@@ -57,6 +59,7 @@
           </template>
         </tree-item>
         <li
+          v-if="allowsDrop"
           :key="`child-${index}-position-after`"
           class="tree-item js-tree-position-placeholder js-tree-position-after"
           :bookmark-id="child.id"
@@ -113,6 +116,7 @@ export default {
     async: { type: Function },
     loadingText: { type: String, default: "Loading..." },
     draggable: { type: Boolean, default: false },
+    allowsDrop: { type: Boolean, default: false },
     dragOverBackgroundColor: { type: String, default: "#C9FDC9" },
     onDragOverOpenFolderTimeout: { type: Number, default: 500 },
     klass: String

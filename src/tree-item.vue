@@ -57,6 +57,7 @@
         :style="groupStyle"
       >
         <li
+          v-if="allowsDrop"
           class="tree-item js-tree-position-placeholder js-tree-position-before-children"
           :bookmark-id="model.id"
           @dragover="() => {}"
@@ -77,6 +78,7 @@
             :height="height"
             :parent-item="model[childrenFieldName]"
             :draggable="draggable"
+            :allows-drop="allowsDrop"
             :drag-over-background-color="dragOverBackgroundColor"
             :on-item-click="onItemClick"
             :on-item-toggle="onItemToggle"
@@ -102,6 +104,7 @@
             </template>
           </tree-item>
           <li
+            v-if="allowsDrop"
             :key="`child-${index}-position-after`"
             class="tree-item js-tree-position-placeholder js-tree-position-after"
             :bookmark-id="child.id"
@@ -147,6 +150,7 @@ import ReachedEnd from './reached-end.vue'
           height: {type: Number, required: true},
           parentItem: {type: Array},
           draggable: {type: Boolean, default: false},
+          allowsDrop: { type: Boolean, default: false },
           dragOverBackgroundColor: {type: String},
           onDragOverOpenFolderTimeout: { type: Number, required: true },
           onItemClick: {
@@ -260,15 +264,16 @@ import ReachedEnd from './reached-end.vue'
       },
       watch: {
           dragPositionInTarget (newValue) {
-            if (newValue.verticalCenter && this.model.type === 'folder') {
-              this.$el.style.backgroundColor = this.dragOverBackgroundColor
-            } else {
-              this.$el.style.backgroundColor = "inherit"
-            }
+            if (this.allowsDrop) {
+              if (newValue.verticalCenter && this.model.type === 'folder') {
+                this.$el.style.backgroundColor = this.dragOverBackgroundColor
+              } else {
+                this.$el.style.backgroundColor = "inherit"
+              }
 
-            if (newValue.top) {
-              this.$el.previousElementSibling.style.height = `${this.height}px`
-              this.$el.nextElementSibling.style.height = `0px`
+              if (newValue.top) {
+                this.$el.previousElementSibling.style.height = `${this.height}px`
+                this.$el.nextElementSibling.style.height = `0px`
                 this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible')
                 this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible')
               } else if (newValue.bottom) {
@@ -277,6 +282,7 @@ import ReachedEnd from './reached-end.vue'
                 this.$el.previousElementSibling.classList.remove('js-tree-position-placeholder__visible')
                 this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible')
               }
+            }
 
             // if (newValue.mouseTreePosition.fromTop > 0 && newValue.mouseTreePosition.fromTop < 1000) {
             //   console.log('< 1000')
@@ -470,49 +476,53 @@ import ReachedEnd from './reached-end.vue'
             }, this.onDragOverOpenFolderTimeout);
           },
           handleItemDrop (e, oriNode, oriItem) {
-            this.$el.style.backgroundColor = "inherit"
-            // dragOverCount is outside of resetDragOverState, because
-            // we want to reset everything else on drag leave, but not the
-            // dragOverCount, as lets us know if we should open a folder or not.
-            // The dragLeave event is fired for all child dom elements of each 
-            // node.
-            this.dragOverCount = 0
-            // Used to specify wether we are reordering items on the same
-            // level. So wether we want to put the dragged item before or
-            // after the current item.
-            const reorder = {
-              before: false,
-              after: false,
-              // id: this.data.id,
-              // node: this
+            if (this.allowsDrop) {
+              this.$el.style.backgroundColor = "inherit"
+              // dragOverCount is outside of resetDragOverState, because
+              // we want to reset everything else on drag leave, but not the
+              // dragOverCount, as lets us know if we should open a folder or not.
+              // The dragLeave event is fired for all child dom elements of each 
+              // node.
+              this.dragOverCount = 0
+              // Used to specify wether we are reordering items on the same
+              // level. So wether we want to put the dragged item before or
+              // after the current item.
+              const reorder = {
+                before: false,
+                after: false,
+                // id: this.data.id,
+                // node: this
+              }
+
+              if (this.isDraggingOverUpwards) {
+                reorder.before = true
+              } else if (this.isDraggingOverDownwards) {
+                reorder.after = true
+              }
+
+              this.resetDragOverStateBubble()
+
+              this.onItemDrop(e, oriNode, oriItem, reorder)
             }
-
-            if (this.isDraggingOverUpwards) {
-              reorder.before = true
-            } else if (this.isDraggingOverDownwards) {
-              reorder.after = true
-            }
-
-            this.resetDragOverStateBubble()
-
-            this.onItemDrop(e, oriNode, oriItem, reorder)
           },
           handleItemDropOnPositionPlaceHolder (e, oriNode, oriItem, isBefore, isAfter) {
-            this.$el.style.backgroundColor = "inherit"
-            // dragOverCount is outside of resetDragOverState, because
-            // we want to reset everything else on drag leave, but not the
-            // dragOverCount, as lets us know if we should open a folder or not.
-            // The dragLeave event is fired for all child dom elements of each 
-            // node.
-            this.dragOverCount = 0
-            this.resetDragOverStateBubble()
+            if (this.allowsDrop) {
+              this.$el.style.backgroundColor = "inherit"
+              // dragOverCount is outside of resetDragOverState, because
+              // we want to reset everything else on drag leave, but not the
+              // dragOverCount, as lets us know if we should open a folder or not.
+              // The dragLeave event is fired for all child dom elements of each 
+              // node.
+              this.dragOverCount = 0
+              this.resetDragOverStateBubble()
 
-            const reorder = {
-              before: isBefore,
-              after: isAfter,
+              const reorder = {
+                before: isBefore,
+                after: isAfter,
+              }
+
+              this.onItemDrop(e, oriNode, oriItem, reorder)
             }
-
-            this.onItemDrop(e, oriNode, oriItem, reorder)
           },
           resetDragOverState (node) {
             node.isDragOverFolderOpenScheduled = false
