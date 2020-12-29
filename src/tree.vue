@@ -117,6 +117,7 @@ export default {
     loadingText: { type: String, default: "Loading..." },
     draggable: { type: Boolean, default: false },
     allowsDrop: { type: Boolean, default: false },
+    onDropBeforeAdd: { type: Function, default: () => {} },
     dragOverBackgroundColor: { type: String, default: "#C9FDC9" },
     onDragOverOpenFolderTimeout: { type: Number, default: 500 },
     klass: String
@@ -459,6 +460,7 @@ export default {
         dropTargetData.opened = true
       }
 
+      this.onDropBeforeAdd(this.draggedItem, action)
       this.$nextTick(() => {
         this.addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode)
       })
