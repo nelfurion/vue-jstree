@@ -305,6 +305,7 @@ import ReachedEnd from './reached-end.vue'
           },
           'model.opened': {
               handler: function (val, oldVal) {
+                console.log('model opened watcher called: ', this.$el)
                   this.onItemToggle(this, this.model)
                   this.handleGroupMaxHeight()
               },

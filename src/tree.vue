@@ -430,7 +430,7 @@ export default {
         // The addBefore and addAfter functions seem to be static functions, and
         // there doesn't appear to be any need for them to be called on a specific
         // node.
-        this.addDraggedItem(this.draggedItem, oriItem, oriNode, reorder)
+        await this.addDraggedItem(this.draggedItem, oriItem, oriNode, reorder)
         this.$emit("item-drop", oriNode, oriItem, this.draggedItem.item, e)
       }
     },
@@ -440,7 +440,7 @@ export default {
         index: Number
       }
     */
-    addDraggedItem (draggedItemDescription, dropTargetData, dropTargetNode, reorder) {
+    async addDraggedItem (draggedItemDescription, dropTargetData, dropTargetNode, reorder) {
       if (dropTargetData.id === draggedItemDescription.item.id) {
         // We are dropping the same item over / under / inside itself
         return
@@ -460,7 +460,7 @@ export default {
         dropTargetData.opened = true
       }
 
-      this.onDropBeforeAdd(this.draggedItem, action)
+      draggedItemDescription.item = await this.onDropBeforeAdd(draggedItemDescription, dropTargetData, action)
       this.$nextTick(() => {
         this.addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode)
       })
