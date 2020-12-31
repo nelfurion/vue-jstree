@@ -4,6 +4,7 @@
     role="tree"
     onselectstart="return false"
     @dragleave.self.prevent.stop="onDragLeaveTree($event)"
+    @dragend="onDragEnd"
   >
     <ul
       :class="containerClasses"
@@ -226,12 +227,31 @@ export default {
         }
       }
     },
-    onDragLeaveTree(event) {
+    clearDragBackgrounds () {
+      // There is a bug where you can end the drag, but still move your mouse
+      // and if you do it right, the background will stay.
+      // This may not be needed, since it's handled in tree-item as well.
+      setTimeout(() => {
+        Array.from(this.$el.querySelectorAll('.tree-item'))
+        .forEach(treeItem => {
+          treeItem.style.backgroundColor = 'inherit'
+        })
+      }, 120);
+    },
+    hideAllPlaceholders () {
       Array.from(this.$el.querySelectorAll('.js-tree-position-placeholder'))
         .forEach(placeholder => {
           placeholder.style.height = '0px'
           placeholder.classList.remove('js-tree-position-placeholder__visible')
         });
+    },
+    onDragEnd() {
+      this.clearDragBackgrounds()
+      this.hideAllPlaceholders()
+    },
+    onDragLeaveTree(event) {
+      this.clearDragBackgrounds()
+      this.hideAllPlaceholders()
     },
     onItemClick(oriNode, oriItem, e) {
       if (this.multiple) {

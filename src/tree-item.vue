@@ -399,6 +399,14 @@ import throttle from 'lodash.throttle'
             self.dragOverCount += 1
           }, 100),
           handleDragLeave: throttle(($event, self, model) => {
+            // If we press escape while hovering over a folder, there is a chance
+            // that we will set the background just after drag ends, but we also
+            // always receive dragleave at that point, so here we make sure the
+            // background disappears.
+            setTimeout(() => {
+              self.$el.style.backgroundColor = "inherit"
+            }, 120);
+
             self.hideChildrenPositionPlaceholders($event)
 
             self.getDragoverPosition($event)
@@ -532,8 +540,8 @@ import throttle from 'lodash.throttle'
             }, this.onDragOverOpenFolderTimeout);
           },
           handleItemDrop (e, oriNode, oriItem) {
+            this.$el.style.backgroundColor = "inherit"
             if (this.allowsDrop) {
-              this.$el.style.backgroundColor = "inherit"
               // dragOverCount is outside of resetDragOverState, because
               // we want to reset everything else on drag leave, but not the
               // dragOverCount, as lets us know if we should open a folder or not.
