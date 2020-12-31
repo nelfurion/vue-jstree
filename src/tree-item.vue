@@ -189,7 +189,7 @@ import ReachedEnd from './reached-end.vue'
           maxHeight: 0,
           events: {},
           itemsToShowPerPage: 30,
-          itemsToShowPage: 1
+          itemsToShowPage: 1,
         }
       },
       computed: {

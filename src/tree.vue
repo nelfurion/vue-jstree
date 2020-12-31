@@ -431,7 +431,6 @@ export default {
         // there doesn't appear to be any need for them to be called on a specific
         // node.
         await this.addDraggedItem(this.draggedItem, oriItem, oriNode, reorder)
-        this.$emit("item-drop", oriNode, oriItem, this.draggedItem.item, e)
       }
     },
     /**
@@ -488,6 +487,7 @@ export default {
 
           const newItem = dropTargetData.addChild(draggedItemDescription.item)
           this.$emit('update:add-child', dropTargetData.id, newItem)
+          
         } else if (action === 'addBefore') {
           // remove from target's parent before adding it next to the target
           this.removeItemFromArray(
@@ -497,6 +497,7 @@ export default {
 
           const newItem = dropTargetData.addBefore(draggedItemDescription.item, dropTargetNode)
           this.$emit('update:add-before', dropTargetData.id, newItem)
+          
         } else if (action === 'addAfter') {
           // remove from target's parent before adding it next to the target
           this.removeItemFromArray(
@@ -507,6 +508,37 @@ export default {
           const newItem = dropTargetData.addAfter(draggedItemDescription.item, dropTargetNode)
           this.$emit('update:add-after', dropTargetData.id, newItem)
         }
+    },
+    /**
+     * Only call this if rendering another tree with the same data, and not using
+     * a store to sync the data automatically.
+     * @param {VueJSTree Item} itemToUpdate the updated item
+     * @param {VueJSTree Item} updateTargetId the target of the update - the item before, item after, or parent of the updated item
+     * @param {String} updateFunc // addBefore or addAfter or addChild
+     */
+    syncTreeItem ({ updateFunc: action, item: itemToUpdate, updateTargetId }) {
+      const item = itemToUpdate.item
+      const itemInTree = this.findTreeItem(itemToUpdate.id)
+      const updateTarget = this.findTreeItem(updateTargetId)
+
+      let updateTargetNode = { parentItem: this.data }
+      const updateTargetParent = this.findTreeItem(updateTarget.parentId)
+      if (updateTargetParent) {
+        updateTargetNode = { parentItem: updateTargetParent.children }
+      }
+
+      if (itemInTree) {
+        // TODO: if necessary update the .opened value here
+        this.removeItem(itemInTree)
+        // we try to repeat that action several times.
+        if (action === 'addChild') { 
+          updateTarget.addChild(itemToUpdate)
+        } else if (action === 'addBefore') {
+          updateTarget.addBefore(itemToUpdate, updateTargetNode)
+        } else if (action === 'addAfter') {
+          updateTarget.addAfter(itemToUpdate, updateTargetNode)
+        }
+      }
     },
     /**
       This is for legacy purposes.
@@ -521,6 +553,15 @@ export default {
           const index = array.map(i => i.id).indexOf(itemDescription.item.id)
           array.splice(index, 1)
         }
+      }
+    },
+    removeItem (item) {
+      const parent = this.findTreeItem(item.parentId)
+      if (!parent) {
+        this.removeItemFromArray(this.data, { item })
+      } else {
+        const index = parent.children.findIndex(t => t.id === item.id)
+        parent.children.splice(index, 1)
       }
     },
     // In the future, the isFolder property of the item should be used instead.
