@@ -540,7 +540,10 @@ import throttle from 'lodash.throttle'
             }, this.onDragOverOpenFolderTimeout);
           },
           handleItemDrop (e, oriNode, oriItem) {
-            this.$el.style.backgroundColor = "inherit"
+            setTimeout(() => {
+              this.$el.style.backgroundColor = "inherit"
+            }, 120);
+
             if (this.allowsDrop) {
               // dragOverCount is outside of resetDragOverState, because
               // we want to reset everything else on drag leave, but not the
@@ -571,7 +574,9 @@ import throttle from 'lodash.throttle'
           },
           handleItemDropOnPositionPlaceHolder (e, oriNode, oriItem, isBefore, isAfter) {
             if (this.allowsDrop) {
-              this.$el.style.backgroundColor = "inherit"
+              setTimeout(() => {
+                this.$el.style.backgroundColor = "inherit"
+              }, 120);
               // dragOverCount is outside of resetDragOverState, because
               // we want to reset everything else on drag leave, but not the
               // dragOverCount, as lets us know if we should open a folder or not.
