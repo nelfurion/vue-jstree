@@ -466,13 +466,13 @@ function applyToTag (styleElement, obj) {
 var ITEM_ID = 0;
 
 var Item = {
-  initializeData: function initializeData(items, parent, childrenFieldName) {
+  initializeData: function initializeData(items, parent, textFieldName, valueFieldName, childrenFieldName, collapse) {
     parent = parent || { id: 'root' };
     if (items && items.length > 0) {
       for (var i in items) {
-        var dataItem = this.initializeDataItem(items[i], parent.id);
+        var dataItem = this.initializeDataItem(items[i], parent.id, textFieldName, valueFieldName, childrenFieldName, collapse);
         items[i] = dataItem;
-        this.initializeData(items[i][childrenFieldName], items[i]);
+        this.initializeData(items[i][childrenFieldName], items[i], textFieldName, valueFieldName, childrenFieldName, collapse);
       }
     }
   },
@@ -496,7 +496,7 @@ var Item = {
 
     var self = this;
     node.addBefore = function (data, selectedNode) {
-      var newItem = self.initializeDataItem(data, node.parentId);
+      var newItem = self.initializeDataItem(data, node.parentId, textFieldName, valueFieldName, childrenFieldName, collapse);
       var index = selectedNode.parentItem.findIndex(function (t) {
         return t.id === node.id;
       });
@@ -504,7 +504,7 @@ var Item = {
       return newItem;
     };
     node.addAfter = function (data, selectedNode) {
-      var newItem = self.initializeDataItem(data, node.parentId);
+      var newItem = self.initializeDataItem(data, node.parentId, textFieldName, valueFieldName, childrenFieldName, collapse);
       var index = selectedNode.parentItem.findIndex(function (t) {
         return t.id === node.id;
       }) + 1;
@@ -513,7 +513,7 @@ var Item = {
     };
     node.addChild = function (data) {
       node[childrenFieldName] = node[childrenFieldName] || [];
-      var newItem = self.initializeDataItem(data, node.id);
+      var newItem = self.initializeDataItem(data, node.id, textFieldName, valueFieldName, childrenFieldName, collapse);
       node.opened = true;
       node[childrenFieldName].unshift(newItem);
       return newItem;
@@ -700,6 +700,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     height: { type: Number, required: true },
     parentItem: { type: Array },
     draggable: { type: Boolean, default: false },
+    allowsDrop: { type: Boolean, default: false },
     dragOverBackgroundColor: { type: String },
     onDragOverOpenFolderTimeout: { type: Number, required: true },
     onItemClick: {
@@ -804,22 +805,33 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   },
   watch: {
     dragPositionInTarget: function dragPositionInTarget(newValue) {
-      if (newValue.verticalCenter && this.model.type === 'folder') {
-        this.$el.style.backgroundColor = this.dragOverBackgroundColor;
-      } else {
-        this.$el.style.backgroundColor = "inherit";
+      // If dragging inside a folder - hide the position just below the 
+      // folder.
+      if (this.model.opened) {
+        this.hideBelowPlaceholder();
       }
 
-      if (newValue.top) {
-        this.$el.previousElementSibling.style.height = this.height + 'px';
-        this.$el.nextElementSibling.style.height = '0px';
-        this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible');
-        this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible');
-      } else if (newValue.bottom) {
-        this.$el.previousElementSibling.style.height = '0px';
-        this.$el.nextElementSibling.style.height = this.height + 'px';
-        this.$el.previousElementSibling.classList.remove('js-tree-position-placeholder__visible');
-        this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible');
+      if (this.allowsDrop) {
+        if (newValue.verticalCenter && this.model.type === 'folder') {
+          this.$el.style.backgroundColor = this.dragOverBackgroundColor;
+        } else {
+          this.$el.style.backgroundColor = "inherit";
+        }
+
+        if (newValue.top) {
+          this.showAbovePlaceholder();
+          this.hideBelowPlaceholder();
+
+          this.hideChildrenPositionPlaceholders({ target: this.$el });
+        } else if (newValue.bottom) {
+          this.hideAbovePlaceholder();
+
+          // Show the position below the current item, unless the current
+          // item is an opened folder.
+          if (!this.model.opened) {
+            this.showBelowPlaceholder();
+          }
+        }
       }
 
       // if (newValue.mouseTreePosition.fromTop > 0 && newValue.mouseTreePosition.fromTop < 1000) {
@@ -835,6 +847,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
     'model.opened': {
       handler: function handler(val, oldVal) {
+        console.log('model opened watcher called: ', this.$el);
         this.onItemToggle(this, this.model);
         this.handleGroupMaxHeight();
       },
@@ -878,6 +891,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   },
 
   methods: {
+    showAbovePlaceholder: function showAbovePlaceholder() {
+      this.$el.previousElementSibling.style.height = this.height + 'px';
+      this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible');
+    },
+    showBelowPlaceholder: function showBelowPlaceholder() {
+      this.$el.nextElementSibling.style.height = this.height + 'px';
+      this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible');
+    },
+    hideBelowPlaceholder: function hideBelowPlaceholder() {
+      this.$el.nextElementSibling.style.height = '0px';
+      this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible');
+    },
+    hideAbovePlaceholder: function hideAbovePlaceholder() {
+      this.$el.previousElementSibling.style.height = '0px';
+      this.$el.previousElementSibling.classList.remove('js-tree-position-placeholder__visible');
+    },
     showMore: function showMore() {
       this.itemsToShowPage++;
     },
@@ -899,6 +928,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.dragOverCount += 1;
     },
     handleDragLeave: function handleDragLeave($event, self, model) {
+      this.hideChildrenPositionPlaceholders($event);
+
       this.getDragoverPosition($event);
       if (!this.dragPositionInTarget.inside) {
         this.isDragEnter = false;
@@ -1025,49 +1056,53 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }, this.onDragOverOpenFolderTimeout);
     },
     handleItemDrop: function handleItemDrop(e, oriNode, oriItem) {
-      this.$el.style.backgroundColor = "inherit";
-      // dragOverCount is outside of resetDragOverState, because
-      // we want to reset everything else on drag leave, but not the
-      // dragOverCount, as lets us know if we should open a folder or not.
-      // The dragLeave event is fired for all child dom elements of each 
-      // node.
-      this.dragOverCount = 0;
-      // Used to specify wether we are reordering items on the same
-      // level. So wether we want to put the dragged item before or
-      // after the current item.
-      var reorder = {
-        before: false,
-        after: false
-        // id: this.data.id,
-        // node: this
-      };
+      if (this.allowsDrop) {
+        this.$el.style.backgroundColor = "inherit";
+        // dragOverCount is outside of resetDragOverState, because
+        // we want to reset everything else on drag leave, but not the
+        // dragOverCount, as lets us know if we should open a folder or not.
+        // The dragLeave event is fired for all child dom elements of each 
+        // node.
+        this.dragOverCount = 0;
+        // Used to specify wether we are reordering items on the same
+        // level. So wether we want to put the dragged item before or
+        // after the current item.
+        var reorder = {
+          before: false,
+          after: false
+          // id: this.data.id,
+          // node: this
+        };
 
-      if (this.isDraggingOverUpwards) {
-        reorder.before = true;
-      } else if (this.isDraggingOverDownwards) {
-        reorder.after = true;
+        if (this.isDraggingOverUpwards) {
+          reorder.before = true;
+        } else if (this.isDraggingOverDownwards) {
+          reorder.after = true;
+        }
+
+        this.resetDragOverStateBubble();
+
+        this.onItemDrop(e, oriNode, oriItem, reorder);
       }
-
-      this.resetDragOverStateBubble();
-
-      this.onItemDrop(e, oriNode, oriItem, reorder);
     },
     handleItemDropOnPositionPlaceHolder: function handleItemDropOnPositionPlaceHolder(e, oriNode, oriItem, isBefore, isAfter) {
-      this.$el.style.backgroundColor = "inherit";
-      // dragOverCount is outside of resetDragOverState, because
-      // we want to reset everything else on drag leave, but not the
-      // dragOverCount, as lets us know if we should open a folder or not.
-      // The dragLeave event is fired for all child dom elements of each 
-      // node.
-      this.dragOverCount = 0;
-      this.resetDragOverStateBubble();
+      if (this.allowsDrop) {
+        this.$el.style.backgroundColor = "inherit";
+        // dragOverCount is outside of resetDragOverState, because
+        // we want to reset everything else on drag leave, but not the
+        // dragOverCount, as lets us know if we should open a folder or not.
+        // The dragLeave event is fired for all child dom elements of each 
+        // node.
+        this.dragOverCount = 0;
+        this.resetDragOverStateBubble();
 
-      var reorder = {
-        before: isBefore,
-        after: isAfter
-      };
+        var reorder = {
+          before: isBefore,
+          after: isAfter
+        };
 
-      this.onItemDrop(e, oriNode, oriItem, reorder);
+        this.onItemDrop(e, oriNode, oriItem, reorder);
+      }
     },
     resetDragOverState: function resetDragOverState(node) {
       node.isDragOverFolderOpenScheduled = false;
@@ -1135,6 +1170,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       // not inside it's children.
       if (!childrenList || !clickIsInsideChildrenList) {
         this.handleItemToggle();
+      }
+    },
+    hideChildrenPositionPlaceholders: function hideChildrenPositionPlaceholders($event) {
+      // If we are dragleaving the whole tree node
+      if ($event.target.isSameNode(this.$el) && this.model.opened) {
+        var childrenList = this.$el.querySelector('.tree-children');
+        var childrenPositionPlaceholders = Array.from(childrenList.querySelectorAll('.js-tree-position-placeholder'));
+        childrenPositionPlaceholders.forEach(function (placeholder) {
+          placeholder.style.height = '0px';
+          placeholder.classList.remove('js-tree-position-placeholder__visible');
+        });
       }
     },
     handleGroupMaxHeight: function handleGroupMaxHeight() {
@@ -1261,6 +1307,8 @@ var ITEM_HEIGHT_LARGE = 32;
     async: { type: Function },
     loadingText: { type: String, default: "Loading..." },
     draggable: { type: Boolean, default: false },
+    allowsDrop: { type: Boolean, default: false },
+    onDropBeforeAdd: { type: Function, default: function _default() {} },
     dragOverBackgroundColor: { type: String, default: "#C9FDC9" },
     onDragOverOpenFolderTimeout: { type: Number, default: 500 },
     klass: String
@@ -1322,9 +1370,10 @@ var ITEM_HEIGHT_LARGE = 32;
       return find(this.data, 'id', id);
     },
     initializeData: function initializeData(items, parent) {
-      return __WEBPACK_IMPORTED_MODULE_4__item_js__["a" /* Item */].initializeData(items, parent, this.childrenFieldName);
+      return __WEBPACK_IMPORTED_MODULE_4__item_js__["a" /* Item */].initializeData(items, parent, this.textFieldName, this.valueFieldName, this.childrenFieldName, this.collapse);
     },
     initializeDataItem: function initializeDataItem(item, parentId) {
+
       return __WEBPACK_IMPORTED_MODULE_4__item_js__["a" /* Item */].initializeDataItem(item, parentId, this.textFieldName, this.valueFieldName, this.childrenFieldName, this.collapse);
     },
     initializeLoading: function initializeLoading() {
@@ -1645,16 +1694,8 @@ var ITEM_HEIGHT_LARGE = 32;
                 return _context2.abrupt('return');
 
               case 41:
-
-                // oriItem is the drop target node's data - addBefore/After are defined here
-                // oriNode is the drop target node - node.parentItem is defined here
-                // Since dragover reordering works by adding paddings over / under nodes,
-                // the target is the node that we want to pass to addBefore/addAfter.
-                // The addBefore and addAfter functions seem to be static functions, and
-                // there doesn't appear to be any need for them to be called on a specific
-                // node.
-                this.addDraggedItem(this.draggedItem, oriItem, oriNode, reorder);
-                this.$emit("item-drop", oriNode, oriItem, this.draggedItem.item, e);
+                _context2.next = 43;
+                return this.addDraggedItem(this.draggedItem, oriItem, oriNode, reorder);
 
               case 43:
               case 'end':
@@ -1677,32 +1718,83 @@ var ITEM_HEIGHT_LARGE = 32;
         index: Number
       }
     */
-    addDraggedItem: function addDraggedItem(draggedItemDescription, dropTargetData, dropTargetNode, reorder) {
-      var _this2 = this;
+    addDraggedItem: function () {
+      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(draggedItemDescription, dropTargetData, dropTargetNode, reorder) {
+        var _this2 = this;
 
-      if (dropTargetData.id === draggedItemDescription.item.id) {
-        // We are dropping the same item over / under / inside itself
-        return;
+        var action;
+        return regeneratorRuntime.wrap(function _callee2$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (!(dropTargetData.id === draggedItemDescription.item.id)) {
+                  _context3.next = 2;
+                  break;
+                }
+
+                return _context3.abrupt('return');
+
+              case 2:
+                action = null;
+
+                if (!reorder.before) {
+                  _context3.next = 7;
+                  break;
+                }
+
+                action = 'addBefore';
+                _context3.next = 15;
+                break;
+
+              case 7:
+                if (!reorder.after) {
+                  _context3.next = 11;
+                  break;
+                }
+
+                action = 'addAfter';
+                _context3.next = 15;
+                break;
+
+              case 11:
+                action = 'addChild';
+
+                if (this.isFolder(dropTargetData)) {
+                  _context3.next = 14;
+                  break;
+                }
+
+                return _context3.abrupt('return');
+
+              case 14:
+
+                dropTargetData.opened = true;
+
+              case 15:
+                _context3.next = 17;
+                return this.onDropBeforeAdd(draggedItemDescription, dropTargetData, action);
+
+              case 17:
+                draggedItemDescription.item = _context3.sent;
+
+                this.$nextTick(function () {
+                  _this2.addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode);
+                });
+
+              case 19:
+              case 'end':
+                return _context3.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function addDraggedItem(_x5, _x6, _x7, _x8) {
+        return _ref4.apply(this, arguments);
       }
 
-      var action = null;
-      if (reorder.before) {
-        action = 'addBefore';
-      } else if (reorder.after) {
-        action = 'addAfter';
-      } else {
-        action = 'addChild';
-        if (!this.isFolder(dropTargetData)) {
-          return;
-        }
-
-        dropTargetData.opened = true;
-      }
-
-      this.$nextTick(function () {
-        _this2.addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode);
-      });
-    },
+      return addDraggedItem;
+    }(),
     addWithoutDuplicates: function addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode) {
       // If the dragged item has a parent item and that parent item
       // has the draggedItem - e.g. this will always be true for items
@@ -1736,6 +1828,42 @@ var ITEM_HEIGHT_LARGE = 32;
     },
 
     /**
+     * Only call this if rendering another tree with the same data, and not using
+     * a store to sync the data automatically.
+     * @param {VueJSTree Item} itemToUpdate the updated item
+     * @param {VueJSTree Item} updateTargetId the target of the update - the item before, item after, or parent of the updated item
+     * @param {String} updateFunc // addBefore or addAfter or addChild
+     */
+    syncTreeItem: function syncTreeItem(_ref5) {
+      var action = _ref5.updateFunc,
+          itemToUpdate = _ref5.item,
+          updateTargetId = _ref5.updateTargetId;
+
+      var item = itemToUpdate.item;
+      var itemInTree = this.findTreeItem(itemToUpdate.id);
+      var updateTarget = this.findTreeItem(updateTargetId);
+
+      var updateTargetNode = { parentItem: this.data };
+      var updateTargetParent = this.findTreeItem(updateTarget.parentId);
+      if (updateTargetParent) {
+        updateTargetNode = { parentItem: updateTargetParent.children };
+      }
+
+      if (itemInTree) {
+        // TODO: if necessary update the .opened value here
+        this.removeItem(itemInTree);
+        // we try to repeat that action several times.
+        if (action === 'addChild') {
+          updateTarget.addChild(itemToUpdate);
+        } else if (action === 'addBefore') {
+          updateTarget.addBefore(itemToUpdate, updateTargetNode);
+        } else if (action === 'addAfter') {
+          updateTarget.addAfter(itemToUpdate, updateTargetNode);
+        }
+      }
+    },
+
+    /**
       This is for legacy purposes.
       itemDescription = {
         item: {}, // the item
@@ -1750,6 +1878,17 @@ var ITEM_HEIGHT_LARGE = 32;
           }).indexOf(itemDescription.item.id);
           array.splice(index, 1);
         }
+      }
+    },
+    removeItem: function removeItem(item) {
+      var parent = this.findTreeItem(item.parentId);
+      if (!parent) {
+        this.removeItemFromArray(this.data, { item: item });
+      } else {
+        var index = parent.children.findIndex(function (t) {
+          return t.id === item.id;
+        });
+        parent.children.splice(index, 1);
       }
     },
 
@@ -1859,7 +1998,7 @@ exports = module.exports = __webpack_require__(1)();
 
 
 // module
-exports.push([module.i, ".LoadMore[data-v-36014d3e]{padding-top:30px;padding-bottom:30px;margin-left:30px;font-size:16px}.LoadMore .LoadMore-text[data-v-36014d3e]{cursor:pointer;text-align:center;border:1px solid #2396f2;border-radius:3px;background-color:#2396f2;color:#212529;transition:background-color .2s,color .2s,border-color .2s,box-shadow .2s}.LoadMore .LoadMore-text[data-v-36014d3e]:hover{background:#43a5f4;color:#212529;border-color:#43a5f4}", ""]);
+exports.push([module.i, ".LoadMore[data-v-36014d3e]{padding-top:30px;padding-bottom:30px;margin-left:30px;font-size:16px}.LoadMore .LoadMore-text[data-v-36014d3e]{cursor:pointer;text-align:center;border:1px solid #2396f2;border-radius:3px;background-color:#2396f2;color:#212529;line-height:24px;transition:background-color .2s,color .2s,border-color .2s,box-shadow .2s}.LoadMore .LoadMore-text[data-v-36014d3e]:hover{background:#43a5f4;color:#212529;border-color:#43a5f4}", ""]);
 
 // exports
 
@@ -2403,7 +2542,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     attrs: {
       "role": "group"
     }
-  }, [_c('li', {
+  }, [(_vm.allowsDrop) ? _c('li', {
     staticClass: "tree-item js-tree-position-placeholder js-tree-position-before-children",
     attrs: {
       "bookmark-id": _vm.model.id
@@ -2416,7 +2555,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         return _vm.handleItemDropOnPositionPlaceHolder($event, _vm.$refs["child-0"][0], _vm.itemsToShow[0], true, false)
       }
     }
-  }), _vm._v(" "), _vm._l((_vm.itemsToShow), function(child, index) {
+  }) : _vm._e(), _vm._v(" "), _vm._l((_vm.itemsToShow), function(child, index) {
     return [_c('tree-item', {
       key: index,
       ref: ("child-" + index),
@@ -2433,6 +2572,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         "height": _vm.height,
         "parent-item": _vm.model[_vm.childrenFieldName],
         "draggable": _vm.draggable,
+        "allows-drop": _vm.allowsDrop,
         "drag-over-background-color": _vm.dragOverBackgroundColor,
         "on-item-click": _vm.onItemClick,
         "on-item-toggle": _vm.onItemToggle,
@@ -2461,7 +2601,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
           })]
         }
       }], null, true)
-    }), _vm._v(" "), _c('li', {
+    }), _vm._v(" "), (_vm.allowsDrop) ? _c('li', {
       key: ("child-" + index + "-position-after"),
       staticClass: "tree-item js-tree-position-placeholder js-tree-position-after",
       attrs: {
@@ -2475,7 +2615,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
           return _vm.handleItemDropOnPositionPlaceHolder($event, _vm.$refs[("child-" + index)][0], child, false, true)
         }
       }
-    })]
+    }) : _vm._e()]
   })], 2) : _vm._e(), _vm._v(" "), (_vm.model.opened && _vm.hasMoreItemsToShow) ? _c('LoadMore', {
     on: {
       "click": _vm.showMore
@@ -2511,7 +2651,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     attrs: {
       "role": "group"
     }
-  }, [_c('li', {
+  }, [(_vm.allowsDrop) ? _c('li', {
     staticClass: "tree-item js-tree-position-placeholder js-tree-position-before-children",
     attrs: {
       "bookmark-id": _vm.data.id
@@ -2524,7 +2664,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         _vm.$refs["child-0"][0].handleItemDropOnPositionPlaceHolder($event, _vm.$refs["child-0"][0], _vm.itemsToShow[0], true, false)
       }
     }
-  }), _vm._v(" "), _vm._l((_vm.itemsToShow), function(child, index) {
+  }) : _vm._e(), _vm._v(" "), _vm._l((_vm.itemsToShow), function(child, index) {
     return [_c('tree-item', {
       key: index,
       ref: ("child-" + index),
@@ -2542,6 +2682,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         "height": _vm.sizeHeight,
         "parent-item": _vm.data,
         "draggable": _vm.draggable,
+        "allows-drop": _vm.allowsDrop,
         "drag-over-background-color": _vm.dragOverBackgroundColor,
         "on-item-click": _vm.onItemClick,
         "on-item-toggle": _vm.onItemToggle,
@@ -2571,7 +2712,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
           })]
         }
       }], null, true)
-    }), _vm._v(" "), _c('li', {
+    }), _vm._v(" "), (_vm.allowsDrop) ? _c('li', {
       key: ("child-" + index + "-position-after"),
       staticClass: "tree-item js-tree-position-placeholder js-tree-position-after",
       attrs: {
@@ -2585,7 +2726,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
           _vm.$refs[("child-" + index)][0].handleItemDropOnPositionPlaceHolder($event, _vm.$refs[("child-" + index)][0], child, false, true)
         }
       }
-    })]
+    }) : _vm._e()]
   })], 2), _vm._v(" "), (_vm.hasMoreItemsToShow) ? _c('LoadMore', {
     on: {
       "click": _vm.showMore
