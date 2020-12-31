@@ -564,6 +564,10 @@ export default {
         parent.children.splice(index, 1)
       }
     },
+    removeItemById (itemId) {
+      const itemInTree = this.findTreeItem(itemId)
+      this.removeItem(itemInTree)
+    },
     // In the future, the isFolder property of the item should be used instead.
     isFolder (item) {
       return !!item[this.childrenFieldName] && item.isFolder
