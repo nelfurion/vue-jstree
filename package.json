@@ -17,6 +17,7 @@
   },
   "bundleDependencies": false,
   "dependencies": {
+    "lodash.throttle": "^4.1.1",
     "tree-search": "github:nelfurion/tree-search#master",
     "tree-crawl": "^1.1.0"
   },

@@ -128,6 +128,8 @@
 import LoadMore from './load-more.vue'
 import ReachedEnd from './reached-end.vue'
 
+import throttle from 'lodash.throttle'
+
   export default {
       name: 'TreeItem',
       components: {
@@ -190,6 +192,7 @@ import ReachedEnd from './reached-end.vue'
           events: {},
           itemsToShowPerPage: 30,
           itemsToShowPage: 1,
+          lastVisiblePlaceholder: null
         }
       },
       computed: {
@@ -278,12 +281,12 @@ import ReachedEnd from './reached-end.vue'
               }
 
               if (newValue.top) {
+                this.hideAllPlaceHoldersExcept(this.$el.previousElementSibling)
                 this.showAbovePlaceholder()
-                this.hideBelowPlaceholder()
 
                 this.hideChildrenPositionPlaceholders({ target: this.$el })
               } else if (newValue.bottom) {
-                this.hideAbovePlaceholder()
+                this.hideAllPlaceHoldersExcept(this.$el.nextElementSibling)
 
                 // Show the position below the current item, unless the current
                 // item is an opened folder.
@@ -301,11 +304,10 @@ import ReachedEnd from './reached-end.vue'
             // }
           },
           data (newValue) {
-              this.model = newValue
+            this.model = newValue
           },
           'model.opened': {
               handler: function (val, oldVal) {
-                console.log('model opened watcher called: ', this.$el)
                   this.onItemToggle(this, this.model)
                   this.handleGroupMaxHeight()
               },
@@ -342,21 +344,40 @@ import ReachedEnd from './reached-end.vue'
       },
       methods: {
           showAbovePlaceholder () {
+            this.lastVisiblePlaceholder = 'above'
             this.$el.previousElementSibling.style.height = `${this.height}px`
             this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible')
           },
           showBelowPlaceholder () {
+            this.lastVisiblePlaceholder = 'below'
             this.$el.nextElementSibling.style.height = `${this.height}px`
             this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible')
           },
+          hideAllPlaceHoldersExcept(skipped) {
+            Array.from(document.querySelectorAll('.js-tree-position-placeholder__visible'))
+              .forEach(element => {
+                if (!element.isSameNode(skipped)) {
+                  element.classList.remove('js-tree-position-placeholder__visible')
+                  element.style.height = `0px`
+                }
+              })
+          },
+          // This one is needed to hide specifically the below placeholder exactly
+          // when the folder is opened.
           hideBelowPlaceholder () {
             this.$el.nextElementSibling.style.height = `0px`
             this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible')
           },
-          hideAbovePlaceholder () {
-            this.$el.previousElementSibling.style.height = `0px`
-            this.$el.previousElementSibling.classList.remove('js-tree-position-placeholder__visible')
-          },
+          // hideAbovePlaceholder () {
+          //   Array.from(document.querySelectorAll('.js-tree-position-placeholder__visible'))
+          //     .forEach(element => {
+          //       element.classList.remove('js-tree-position-placeholder__visible')
+          //       element.style.height = `0px`
+          //     })
+
+          //   this.$el.previousElementSibling.style.height = `0px`
+          //   this.$el.previousElementSibling.classList.remove('js-tree-position-placeholder__visible')
+          // },
           showMore () {
             this.itemsToShowPage++
           },
@@ -369,33 +390,33 @@ import ReachedEnd from './reached-end.vue'
             this.resetDragOverStateBubble()
             this.onItemDragEnd($event, self, model)
           },
-          handleDragEnter ($event, self, model) {
-            this.getDragoverPosition($event)
-            if (this.dragPositionInTarget.inside) {
-              this.isDragEnter = true
+          handleDragEnter: throttle(($event, self, model) => {
+            self.getDragoverPosition($event)
+            if (self.dragPositionInTarget.inside) {
+              self.isDragEnter = true
             }
 
-            this.dragOverCount += 1
-          },
-          handleDragLeave ($event, self, model) {
-            this.hideChildrenPositionPlaceholders($event)
+            self.dragOverCount += 1
+          }, 100),
+          handleDragLeave: throttle(($event, self, model) => {
+            self.hideChildrenPositionPlaceholders($event)
 
-            this.getDragoverPosition($event)
-            if (!this.dragPositionInTarget.inside) {
-              this.isDragEnter = false
+            self.getDragoverPosition($event)
+            if (!self.dragPositionInTarget.inside) {
+              self.isDragEnter = false
             }
 
             // This should be inside otherwise dragging out of fodlers
             // does not work. - E.g. draggin something from a fodler, under
             // the last folder in the root level.
-            if (this.dragOverCount === 0) {
-              this.resetDragOverStateBubble()
+            if (self.dragOverCount === 0) {
+              self.resetDragOverStateBubble()
             }
 
-            if (this.dragOverCount) {
-              this.dragOverCount -= 1
+            if (self.dragOverCount) {
+              self.dragOverCount -= 1
             }
-          },
+          }, 100),
           getDragoverPosition ($event) {
             this.dragPositionInTarget = this.calculateDragPositionInTarget($event)
 
@@ -453,30 +474,37 @@ import ReachedEnd from './reached-end.vue'
             return dragPositionInTarget
           },
           handleDragOver ($event, self, model) {
-            if (this.isBeingDragged) {
-              return
-            }
-
-            this.getDragoverPosition($event)
-            if (this.dragPositionInTarget.inside) {
-              this.isDragEnter = true
-            }
-
-            if (this.dragPositionInTarget.topLeft && this.isFolder && this.model.opened && !this.isCloseFolderScheduled) {
-              this.closeScheduleFolder()
-            } else {
-              if (this.dragPositionInTarget.verticalCenter && !this.dragPositionInTarget.topLeft && this.isFolder && !this.isDragOverFolderOpenScheduled && !this.model.opened) {
-                 // if this is a collection, and no open is scheduled - schedule
-                // an open for after 1 second, and in the open check if the
-                // cursor is still over the collection. If it is, then open the
-                // the collection.
-                this.openFolderForDrop()
-              }
-            }
-
-            
-            this.onItemDragOver($event, self, model)
+            this.onDragOverThrottled($event, self, model, this)
           },
+          onDragOverThrottled: throttle(($event, self, model) => {
+              if (self.isBeingDragged) {
+                return
+              }
+
+              self.getDragoverPosition($event)
+              if (self.dragPositionInTarget.inside) {
+                self.isDragEnter = true
+              }
+
+              if (self.dragPositionInTarget.topLeft && self.isFolder && self.model.opened && !self.isCloseFolderScheduled) {
+                self.closeScheduleFolder()
+              } else {
+                if (self.dragPositionInTarget.verticalCenter && !self.dragPositionInTarget.topLeft && self.isFolder && !self.isDragOverFolderOpenScheduled && !self.model.opened) {
+                  // if this is a collection, and no open is scheduled - schedule
+                  // an open for after 1 second, and in the open check if the
+                  // cursor is still over the collection. If it is, then open the
+                  // the collection.
+                  self.openFolderForDrop()
+                }
+              }
+
+              self.onItemDragOver($event, self, model)
+            }, 
+            100, 
+            {
+              leading: true
+            }
+          ),
           openFolderForDrop () {
             this.isDragOverFolderOpenScheduled = true
             const node = this
@@ -522,9 +550,9 @@ import ReachedEnd from './reached-end.vue'
                 // node: this
               }
 
-              if (this.isDraggingOverUpwards) {
+              if (this.isDraggingOverUpwards || (this.lastVisiblePlaceholder === 'above' && !this.model.opened)) {
                 reorder.before = true
-              } else if (this.isDraggingOverDownwards) {
+              } else if (this.isDraggingOverDownwards || (this.lastVisiblePlaceholder === 'below' && !this.model.opened)) {
                 reorder.after = true
               }
 
@@ -567,13 +595,7 @@ import ReachedEnd from './reached-end.vue'
               currentNode = currentNode.parentTreeNode            
             }
 
-            const positionPlaceholders = 
-              document.querySelectorAll('.js-tree-position-placeholder')
-
-            for (const placeholder of positionPlaceholders) {
-              placeholder.style.height = "0px"
-              placeholder.classList.remove('js-tree-position-placeholder__visible')
-            }
+            this.hideAllPlaceHoldersExcept(null)
           },
           handleItemToggle () {
               if (this.isFolder) {
