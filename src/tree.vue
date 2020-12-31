@@ -517,7 +517,6 @@ export default {
      * @param {String} updateFunc // addBefore or addAfter or addChild
      */
     syncTreeItem ({ updateFunc: action, item: itemToUpdate, updateTargetId }) {
-      const item = itemToUpdate.item
       const itemInTree = this.findTreeItem(itemToUpdate.id)
       const updateTarget = this.findTreeItem(updateTargetId)
 
@@ -530,14 +529,15 @@ export default {
       if (itemInTree) {
         // TODO: if necessary update the .opened value here
         this.removeItem(itemInTree)
-        // we try to repeat that action several times.
-        if (action === 'addChild') { 
-          updateTarget.addChild(itemToUpdate)
-        } else if (action === 'addBefore') {
-          updateTarget.addBefore(itemToUpdate, updateTargetNode)
-        } else if (action === 'addAfter') {
-          updateTarget.addAfter(itemToUpdate, updateTargetNode)
-        }
+      }
+
+      // we try to repeat that action several times.
+      if (action === 'addChild') { 
+        updateTarget.addChild(itemToUpdate)
+      } else if (action === 'addBefore') {
+        updateTarget.addBefore(itemToUpdate, updateTargetNode)
+      } else if (action === 'addAfter') {
+        updateTarget.addAfter(itemToUpdate, updateTargetNode)
       }
     },
     /**
