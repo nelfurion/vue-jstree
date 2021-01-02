@@ -119,7 +119,7 @@ export default {
     draggable: { type: Boolean, default: false },
     allowsDrop: { type: Boolean, default: false },
     onDropBeforeAdd: { type: Function, default: () => {} },
-    dragOverBackgroundColor: { type: String, default: "#C9FDC9" },
+    dragOverBackgroundColor: { type: String, default: "lightslategray" },
     onDragOverOpenFolderTimeout: { type: Number, default: 500 },
     klass: String
   },
