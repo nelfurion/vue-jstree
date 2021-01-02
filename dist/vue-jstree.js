@@ -1331,7 +1331,7 @@ var ITEM_HEIGHT_LARGE = 32;
     draggable: { type: Boolean, default: false },
     allowsDrop: { type: Boolean, default: false },
     onDropBeforeAdd: { type: Function, default: function _default() {} },
-    dragOverBackgroundColor: { type: String, default: "#C9FDC9" },
+    dragOverBackgroundColor: { type: String, default: "lightslategray" },
     onDragOverOpenFolderTimeout: { type: Number, default: 500 },
     klass: String
   },
@@ -1450,10 +1450,14 @@ var ITEM_HEIGHT_LARGE = 32;
       }, 120);
     },
     hideAllPlaceholders: function hideAllPlaceholders() {
-      Array.from(this.$el.querySelectorAll('.js-tree-position-placeholder')).forEach(function (placeholder) {
-        placeholder.style.height = '0px';
-        placeholder.classList.remove('js-tree-position-placeholder__visible');
-      });
+      var _this2 = this;
+
+      setTimeout(function () {
+        Array.from(_this2.$el.querySelectorAll('.js-tree-position-placeholder')).forEach(function (placeholder) {
+          placeholder.style.height = '0px';
+          placeholder.classList.remove('js-tree-position-placeholder__visible');
+        });
+      }, 120);
     },
     onDragEnd: function onDragEnd() {
       this.clearDragBackgrounds();
@@ -1564,7 +1568,7 @@ var ITEM_HEIGHT_LARGE = 32;
     },
     onItemDrop: function () {
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e, oriNode, oriItem, reorder) {
-        var _this2 = this;
+        var _this3 = this;
 
         var dataIsUpdated, eventData, _loop, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, item, parentItem;
 
@@ -1613,7 +1617,7 @@ var ITEM_HEIGHT_LARGE = 32;
                           return _context.stop();
                       }
                     }
-                  }, _loop, _this2);
+                  }, _loop, _this3);
                 });
                 _iteratorNormalCompletion2 = true;
                 _didIteratorError2 = false;
@@ -1711,7 +1715,7 @@ var ITEM_HEIGHT_LARGE = 32;
                 }
 
                 if (!(!eventData && (this.draggedItem.parentItem === oriItem[this.childrenFieldName] || oriItem[this.childrenFieldName] && oriItem[this.childrenFieldName].findIndex(function (t) {
-                  return t.id === _this2.draggedItem.item.id;
+                  return t.id === _this3.draggedItem.item.id;
                 }) !== -1))) {
                   _context2.next = 37;
                   break;
@@ -1762,7 +1766,7 @@ var ITEM_HEIGHT_LARGE = 32;
     */
     addDraggedItem: function () {
       var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(draggedItemDescription, dropTargetData, dropTargetNode, reorder) {
-        var _this3 = this;
+        var _this4 = this;
 
         var action;
         return regeneratorRuntime.wrap(function _callee2$(_context3) {
@@ -1820,7 +1824,7 @@ var ITEM_HEIGHT_LARGE = 32;
                 draggedItemDescription.item = _context3.sent;
 
                 this.$nextTick(function () {
-                  _this3.addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode);
+                  _this4.addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode);
                 });
 
               case 19:
@@ -3128,7 +3132,8 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     class: _vm.classes,
     attrs: {
       "role": "tree",
-      "onselectstart": "return false"
+      "onselectstart": "return false",
+      "tabindex": "0"
     },
     on: {
       "dragleave": function($event) {
@@ -3137,7 +3142,11 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         $event.stopPropagation();
         return _vm.onDragLeaveTree($event)
       },
-      "dragend": _vm.onDragEnd
+      "dragend": _vm.onDragEnd,
+      "!keyup": function($event) {
+        return _vm.onDragEnd($event)
+      },
+      "mouseup": _vm.onDragEnd
     }
   }, [_c('ul', {
     class: _vm.containerClasses,

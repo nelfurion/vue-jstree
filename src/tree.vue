@@ -3,8 +3,11 @@
     :class="classes"
     role="tree"
     onselectstart="return false"
+    tabindex="0"
     @dragleave.self.prevent.stop="onDragLeaveTree($event)"
     @dragend="onDragEnd"
+    @keyup.capture="onDragEnd"
+    @mouseup="onDragEnd"
   >
     <ul
       :class="containerClasses"
@@ -239,11 +242,13 @@ export default {
       }, 120);
     },
     hideAllPlaceholders () {
-      Array.from(this.$el.querySelectorAll('.js-tree-position-placeholder'))
-        .forEach(placeholder => {
-          placeholder.style.height = '0px'
-          placeholder.classList.remove('js-tree-position-placeholder__visible')
-        });
+      setTimeout(() => {
+        Array.from(this.$el.querySelectorAll('.js-tree-position-placeholder'))
+          .forEach(placeholder => {
+            placeholder.style.height = '0px'
+            placeholder.classList.remove('js-tree-position-placeholder__visible')
+          })
+      }, 120)
     },
     onDragEnd() {
       this.clearDragBackgrounds()
