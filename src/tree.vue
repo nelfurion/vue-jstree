@@ -584,14 +584,17 @@ export default {
       const parent = this.findTreeItem(item.parentId)
       if (!parent) {
         this.removeItemFromArray(this.data, { item })
+
       } else {
         const index = parent.children.findIndex(t => t.id === item.id)
         parent.children.splice(index, 1)
       }
     },
     removeItemById (itemId) {
-      const itemInTree = this.findTreeItem(itemId)
-      this.removeItem(itemInTree)
+      let itemInTree = this.findTreeItem(itemId)
+      if (itemInTree) {
+        this.removeItem(itemInTree)
+      }
     },
     // In the future, the isFolder property of the item should be used instead.
     isFolder (item) {
