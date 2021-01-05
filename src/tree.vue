@@ -189,7 +189,12 @@ export default {
     },
     findTreeItem (id) {
       const find = treeSearch(this.childrenFieldName)
-      return find(this.data, 'id', id)
+      let item = find(this.data, 'id', id)
+      if (item && !item.addBefore) {
+        item = this.initializeDataItem(item, item.parentId)
+      }
+
+      return item
     },
     initializeData(items, parent) {
       return Item.initializeData(
@@ -465,6 +470,7 @@ export default {
       }
     */
     async addDraggedItem (draggedItemDescription, dropTargetData, dropTargetNode, reorder) {
+      dropTargetData = this.findTreeItem(dropTargetData.id)
       if (dropTargetData.id === draggedItemDescription.item.id) {
         // We are dropping the same item over / under / inside itself
         return
