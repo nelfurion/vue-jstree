@@ -837,6 +837,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             this.showBelowPlaceholder();
           }
         }
+
+        // In order to hide the placeholders when the user is draggin 
+        // in the vertical center of the folder. However we don't want
+        // to remove them with display none, as that will jiggle the 
+        // elements in the tree, and change their positions.
+        if (newValue.verticalCenter && this.isFolder) {
+          this.$el.nextElementSibling.style.visibility = 'hidden';
+          this.$el.previousElementSibling.style.visibility = 'hidden';
+        } else {
+          this.$el.nextElementSibling.style.visibility = 'visible';
+          this.$el.previousElementSibling.style.visibility = 'visible';
+        }
       }
 
       // if (newValue.mouseTreePosition.fromTop > 0 && newValue.mouseTreePosition.fromTop < 1000) {
@@ -1015,7 +1027,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           yInRect = mouseY - targetRect.top;
 
 
-      var oneThirdNodeHeight = this.height / 3;
+      var oneThirdNodeHeight = this.height / 4;
 
       var dragPositionInTarget = {
         mouseWindowPosition: {
@@ -1125,10 +1137,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           // node: this
         };
 
-        if (this.isDraggingOverUpwards || this.lastVisiblePlaceholder === 'above' && !this.model.opened) {
-          reorder.before = true;
-        } else if (this.isDraggingOverDownwards || this.lastVisiblePlaceholder === 'below' && !this.model.opened) {
-          reorder.after = true;
+        var position = JSON.parse(JSON.stringify(this.dragPositionInTarget));
+
+        if (!this.dragPositionInTarget.verticalCenter) {
+          if (this.isDraggingOverUpwards || this.lastVisiblePlaceholder === 'above' && !this.model.opened) {
+            reorder.before = true;
+          } else if (this.isDraggingOverDownwards || this.lastVisiblePlaceholder === 'below' && !this.model.opened) {
+            reorder.after = true;
+          }
         }
 
         this.resetDragOverStateBubble();
@@ -1254,6 +1270,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         this.maxHeight = length * (this.height + paddingTop + paddingBottom) + childrenHeight;
         this.maxHeight += length + 1; // position placeholders
 
+        this.maxHeight += this.height + paddingTop + paddingBottom;
+
         if (this.$parent.$options._componentTag === 'tree-item') {
           this.$parent.handleGroupMaxHeight();
         }
@@ -1342,7 +1360,7 @@ var ITEM_HEIGHT_LARGE = 32;
     allowsDrop: { type: Boolean, default: false },
     onDropBeforeAdd: { type: Function, default: function _default() {} },
     dragOverBackgroundColor: { type: String, default: "lightslategray" },
-    onDragOverOpenFolderTimeout: { type: Number, default: 500 },
+    onDragOverOpenFolderTimeout: { type: Number, default: 1000 },
     klass: String
   },
   data: function data() {
@@ -1759,6 +1777,10 @@ var ITEM_HEIGHT_LARGE = 32;
                 return this.addDraggedItem(this.draggedItem, oriItem, oriNode, reorder);
 
               case 43:
+
+                this.onDragEnd();
+
+              case 44:
               case 'end':
                 return _context2.stop();
             }

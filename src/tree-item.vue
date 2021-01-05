@@ -294,6 +294,18 @@ import throttle from 'lodash.throttle'
                   this.showBelowPlaceholder()
                 }
               }
+
+              // In order to hide the placeholders when the user is draggin 
+              // in the vertical center of the folder. However we don't want
+              // to remove them with display none, as that will jiggle the 
+              // elements in the tree, and change their positions.
+              if (newValue.verticalCenter && this.isFolder) {
+                this.$el.nextElementSibling.style.visibility = 'hidden'
+                this.$el.previousElementSibling.style.visibility = 'hidden'
+              } else {
+                this.$el.nextElementSibling.style.visibility = 'visible'
+                this.$el.previousElementSibling.style.visibility = 'visible'
+              }
             }
 
             // if (newValue.mouseTreePosition.fromTop > 0 && newValue.mouseTreePosition.fromTop < 1000) {
@@ -462,7 +474,7 @@ import throttle from 'lodash.throttle'
               mouseY - targetRect.top
             ]
 
-            const oneThirdNodeHeight = this.height / 3
+            const oneThirdNodeHeight = this.height / 4
 
             const dragPositionInTarget = {
               mouseWindowPosition: {
@@ -568,10 +580,14 @@ import throttle from 'lodash.throttle'
                 // node: this
               }
 
-              if (this.isDraggingOverUpwards || (this.lastVisiblePlaceholder === 'above' && !this.model.opened)) {
-                reorder.before = true
-              } else if (this.isDraggingOverDownwards || (this.lastVisiblePlaceholder === 'below' && !this.model.opened)) {
-                reorder.after = true
+              const position = JSON.parse(JSON.stringify(this.dragPositionInTarget))
+
+              if (!this.dragPositionInTarget.verticalCenter) {
+                if (this.isDraggingOverUpwards || (this.lastVisiblePlaceholder === 'above' && !this.model.opened)) {
+                  reorder.before = true
+                } else if (this.isDraggingOverDownwards || (this.lastVisiblePlaceholder === 'below' && !this.model.opened)) {
+                  reorder.after = true
+                }
               }
 
               this.resetDragOverStateBubble()
@@ -673,6 +689,8 @@ import throttle from 'lodash.throttle'
 
                   this.maxHeight = length * (this.height + paddingTop + paddingBottom) + childrenHeight
                   this.maxHeight += length + 1 // position placeholders
+
+                  this.maxHeight += (this.height + paddingTop + paddingBottom)
 
                   if (this.$parent.$options._componentTag === 'tree-item') {
                       this.$parent.handleGroupMaxHeight()

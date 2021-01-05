@@ -123,7 +123,7 @@ export default {
     allowsDrop: { type: Boolean, default: false },
     onDropBeforeAdd: { type: Function, default: () => {} },
     dragOverBackgroundColor: { type: String, default: "lightslategray" },
-    onDragOverOpenFolderTimeout: { type: Number, default: 500 },
+    onDragOverOpenFolderTimeout: { type: Number, default: 1000 },
     klass: String
   },
   data() {
@@ -462,6 +462,8 @@ export default {
         // node.
         await this.addDraggedItem(this.draggedItem, oriItem, oriNode, reorder)
       }
+
+      this.onDragEnd()
     },
     /**
       itemDescription = {
