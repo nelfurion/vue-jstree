@@ -896,18 +896,23 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
   methods: {
     showAbovePlaceholder: function showAbovePlaceholder() {
-      this.lastVisiblePlaceholder = 'above';
-      this.$el.previousElementSibling.style.height = this.height + 'px';
-      this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible');
+      if (this.allowsDrop) {
+        this.lastVisiblePlaceholder = 'above';
+        this.$el.previousElementSibling.style.height = this.height + 'px';
+        this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible');
+      }
     },
     showBelowPlaceholder: function showBelowPlaceholder() {
-      this.lastVisiblePlaceholder = 'below';
-      this.$el.nextElementSibling.style.height = this.height + 'px';
-      this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible');
+      if (this.allowsDrop) {
+        this.lastVisiblePlaceholder = 'below';
+        this.$el.nextElementSibling.style.height = this.height + 'px';
+        this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible');
+      }
     },
     hideAllPlaceHoldersExcept: function hideAllPlaceHoldersExcept(skipped) {
+      var self = this;
       Array.from(document.querySelectorAll('.js-tree-position-placeholder__visible')).forEach(function (element) {
-        if (!element.isSameNode(skipped)) {
+        if (!element.isSameNode(skipped) && self.allowsDrop) {
           element.classList.remove('js-tree-position-placeholder__visible');
           element.style.height = '0px';
         }
@@ -917,8 +922,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     // This one is needed to hide specifically the below placeholder exactly
     // when the folder is opened.
     hideBelowPlaceholder: function hideBelowPlaceholder() {
-      this.$el.nextElementSibling.style.height = '0px';
-      this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible');
+      if (this.allowsDrop) {
+        this.$el.nextElementSibling.style.height = '0px';
+        this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible');
+      }
     },
 
     // hideAbovePlaceholder () {
@@ -1199,9 +1206,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if ($event.target.isSameNode(this.$el) && this.model.opened) {
         var childrenList = this.$el.querySelector('.tree-children');
         var childrenPositionPlaceholders = Array.from(childrenList.querySelectorAll('.js-tree-position-placeholder'));
+        var self = this;
         childrenPositionPlaceholders.forEach(function (placeholder) {
-          placeholder.style.height = '0px';
-          placeholder.classList.remove('js-tree-position-placeholder__visible');
+          if (self.allowsDrop) {
+            placeholder.style.height = '0px';
+            placeholder.classList.remove('js-tree-position-placeholder__visible');
+          }
         });
       }
     },

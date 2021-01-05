@@ -344,19 +344,24 @@ import throttle from 'lodash.throttle'
       },
       methods: {
           showAbovePlaceholder () {
-            this.lastVisiblePlaceholder = 'above'
-            this.$el.previousElementSibling.style.height = `${this.height}px`
-            this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible')
+            if (this.allowsDrop) {
+              this.lastVisiblePlaceholder = 'above'
+              this.$el.previousElementSibling.style.height = `${this.height}px`
+              this.$el.previousElementSibling.classList.add('js-tree-position-placeholder__visible')
+            }
           },
           showBelowPlaceholder () {
-            this.lastVisiblePlaceholder = 'below'
-            this.$el.nextElementSibling.style.height = `${this.height}px`
-            this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible')
+            if (this.allowsDrop) {
+              this.lastVisiblePlaceholder = 'below'
+              this.$el.nextElementSibling.style.height = `${this.height}px`
+              this.$el.nextElementSibling.classList.add('js-tree-position-placeholder__visible')
+            }
           },
           hideAllPlaceHoldersExcept(skipped) {
+            const self = this
             Array.from(document.querySelectorAll('.js-tree-position-placeholder__visible'))
               .forEach(element => {
-                if (!element.isSameNode(skipped)) {
+                if (!element.isSameNode(skipped) && self.allowsDrop) {
                   element.classList.remove('js-tree-position-placeholder__visible')
                   element.style.height = `0px`
                 }
@@ -365,8 +370,10 @@ import throttle from 'lodash.throttle'
           // This one is needed to hide specifically the below placeholder exactly
           // when the folder is opened.
           hideBelowPlaceholder () {
-            this.$el.nextElementSibling.style.height = `0px`
-            this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible')
+            if (this.allowsDrop) {
+              this.$el.nextElementSibling.style.height = `0px`
+              this.$el.nextElementSibling.classList.remove('js-tree-position-placeholder__visible')
+            }
           },
           // hideAbovePlaceholder () {
           //   Array.from(document.querySelectorAll('.js-tree-position-placeholder__visible'))
@@ -640,9 +647,12 @@ import throttle from 'lodash.throttle'
             if ($event.target.isSameNode(this.$el) && this.model.opened) {
               const childrenList = this.$el.querySelector('.tree-children')
               const childrenPositionPlaceholders = Array.from(childrenList.querySelectorAll('.js-tree-position-placeholder'))
+              const self = this
               childrenPositionPlaceholders.forEach(placeholder => {
-                placeholder.style.height = `0px`
-                placeholder.classList.remove('js-tree-position-placeholder__visible')
+                if (self.allowsDrop) {
+                  placeholder.style.height = `0px`
+                  placeholder.classList.remove('js-tree-position-placeholder__visible') 
+                }
               })
             }
           },
