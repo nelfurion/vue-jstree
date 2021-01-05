@@ -1389,7 +1389,12 @@ var ITEM_HEIGHT_LARGE = 32;
     },
     findTreeItem: function findTreeItem(id) {
       var find = __WEBPACK_IMPORTED_MODULE_0_tree_search___default()(this.childrenFieldName);
-      return find(this.data, 'id', id);
+      var item = find(this.data, 'id', id);
+      if (item && !item.addBefore) {
+        item = this.initializeDataItem(item, item.parentId);
+      }
+
+      return item;
     },
     initializeData: function initializeData(items, parent) {
       return __WEBPACK_IMPORTED_MODULE_4__item_js__["a" /* Item */].initializeData(items, parent, this.textFieldName, this.valueFieldName, this.childrenFieldName, this.collapse);
@@ -1773,61 +1778,63 @@ var ITEM_HEIGHT_LARGE = 32;
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
+                dropTargetData = this.findTreeItem(dropTargetData.id);
+
                 if (!(dropTargetData.id === draggedItemDescription.item.id)) {
-                  _context3.next = 2;
+                  _context3.next = 3;
                   break;
                 }
 
                 return _context3.abrupt('return');
 
-              case 2:
+              case 3:
                 action = null;
 
                 if (!reorder.before) {
-                  _context3.next = 7;
+                  _context3.next = 8;
                   break;
                 }
 
                 action = 'addBefore';
-                _context3.next = 15;
+                _context3.next = 16;
                 break;
 
-              case 7:
+              case 8:
                 if (!reorder.after) {
-                  _context3.next = 11;
+                  _context3.next = 12;
                   break;
                 }
 
                 action = 'addAfter';
-                _context3.next = 15;
+                _context3.next = 16;
                 break;
 
-              case 11:
+              case 12:
                 action = 'addChild';
 
                 if (this.isFolder(dropTargetData)) {
-                  _context3.next = 14;
+                  _context3.next = 15;
                   break;
                 }
 
                 return _context3.abrupt('return');
 
-              case 14:
+              case 15:
 
                 dropTargetData.opened = true;
 
-              case 15:
-                _context3.next = 17;
+              case 16:
+                _context3.next = 18;
                 return this.onDropBeforeAdd(draggedItemDescription, dropTargetData, action);
 
-              case 17:
+              case 18:
                 draggedItemDescription.item = _context3.sent;
 
                 this.$nextTick(function () {
                   _this4.addWithoutDuplicates(action, draggedItemDescription, dropTargetData, dropTargetNode);
                 });
 
-              case 19:
+              case 20:
               case 'end':
                 return _context3.stop();
             }
@@ -1939,7 +1946,9 @@ var ITEM_HEIGHT_LARGE = 32;
     },
     removeItemById: function removeItemById(itemId) {
       var itemInTree = this.findTreeItem(itemId);
-      this.removeItem(itemInTree);
+      if (itemInTree) {
+        this.removeItem(itemInTree);
+      }
     },
 
     // In the future, the isFolder property of the item should be used instead.
