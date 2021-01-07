@@ -1139,7 +1139,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
         var position = JSON.parse(JSON.stringify(this.dragPositionInTarget));
 
-        if (!this.dragPositionInTarget.verticalCenter) {
+        if (!(this.dragPositionInTarget.verticalCenter && this.isFolder)) {
           if (this.isDraggingOverUpwards || this.lastVisiblePlaceholder === 'above' && !this.model.opened) {
             reorder.before = true;
           } else if (this.isDraggingOverDownwards || this.lastVisiblePlaceholder === 'below' && !this.model.opened) {
@@ -1359,7 +1359,7 @@ var ITEM_HEIGHT_LARGE = 32;
     draggable: { type: Boolean, default: false },
     allowsDrop: { type: Boolean, default: false },
     onDropBeforeAdd: { type: Function, default: function _default() {} },
-    dragOverBackgroundColor: { type: String, default: "lightslategray" },
+    dragOverBackgroundColor: { type: String, default: "#112233" },
     onDragOverOpenFolderTimeout: { type: Number, default: 1000 },
     klass: String
   },

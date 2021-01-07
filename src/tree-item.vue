@@ -582,7 +582,7 @@ import throttle from 'lodash.throttle'
 
               const position = JSON.parse(JSON.stringify(this.dragPositionInTarget))
 
-              if (!this.dragPositionInTarget.verticalCenter) {
+              if (!(this.dragPositionInTarget.verticalCenter && this.isFolder)) {
                 if (this.isDraggingOverUpwards || (this.lastVisiblePlaceholder === 'above' && !this.model.opened)) {
                   reorder.before = true
                 } else if (this.isDraggingOverDownwards || (this.lastVisiblePlaceholder === 'below' && !this.model.opened)) {
